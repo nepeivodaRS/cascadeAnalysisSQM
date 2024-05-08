@@ -1,14 +1,16 @@
 #!/bin/bash
 # Xi MC Closure
-workingDir="\"/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM\""
+workingDir="\"${PWD}\""
 
-pathToDATA="\"/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/data/22apr_lhc22o_pass6_medium/AnalysisResults.root\""
+date="2024-05-07"
 
-pathToMC="\"/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/data/25apr_lhc24b1/AnalysisResults.root\""
-pathToMCPP="\"/Users/rnepeiv/workLund/PhD_work/run3omega/postprocessingo2physics/results/run3_13tev/xi/lhc24b1/27apr/AnalysisResults.root\""
+pathToDATA="\"${PWD}/data/22apr_lhc22o_pass6_medium/AnalysisResults.root\""
 
-pathToEfficiencyCalib="\"/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/efficiencies/effCalibration_LHC24b1_mc-closure.root\""
-pathToEfficiency="\"/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/efficiencies/efficiency_XiPm_LHC24b1_mc-closure.root\""
+pathToMC="\"${PWD}/data/25apr_lhc24b1/AnalysisResults.root\""
+pathToMCPP="\"${PWD}/O2PhysicsRuns/results/run3_13tev/xi/lhc24b1/$date/AnalysisResults.root\""
+
+pathToEfficiencyCalib="\"${PWD}/efficiencies/effCalibration_LHC24b1_mc-closure.root\""
+pathToEfficiency="\"${PWD}/efficiencies/efficiency_XiPm_LHC24b1_mc-closure.root\""
 
 root -l "yield.C(2, 0, 0, 1,
                $pathToMC,

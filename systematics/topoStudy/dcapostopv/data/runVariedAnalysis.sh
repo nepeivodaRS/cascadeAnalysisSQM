@@ -11,13 +11,13 @@ fi
 
 #default
 o2-analysis-lf-cascpostprocessing -b --configuration json://config/configDEF.json
-mv AnalysisResults.root results/MC-LHC24b1-DEF.root
+mv AnalysisResults.root $directory/DATA-LHC22o_apass6-DEF.root
 
 #systematics
-for i in {1..8}
+for i in {1..9}
 do
     o2-analysis-lf-cascpostprocessing -b  --configuration json://config/systjson$i.json
-    mv AnalysisResults.root results/MC-LHC24b1-$i.root
+    mv AnalysisResults.root $directory/DATA-LHC22o_apass6-$i.root
 done
 
 rm dpl-config.json

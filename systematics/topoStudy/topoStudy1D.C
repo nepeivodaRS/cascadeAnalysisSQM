@@ -8,7 +8,9 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
                          Double_t cutMin = 0.970,
                          Double_t cutMax = 0.999,
                          Double_t yMin = 0.1,
-                         Double_t yMax = 1.5,                         
+                         Double_t yMax = 1.5,
+                         Double_t yRatioMin = 0.96,
+                         Double_t yRatioMax = 1.04,    
                          const std::string workingDir = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/systematics/topoStudy/casccospa",
                          const std::string postFix = "_casccospa")
 {
@@ -259,8 +261,8 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   TH1F* signaLossMC[numPtBins];
   TH1F* signaLossRatio[numPtBins];
   for (Int_t b = 1; b <= numPtBins; b++) {
-    signaLossDATA[b - 1] = new TH1F(Form("signalLossFractionDATA_%i", b), Form("signalLossFractionDATA_%i", b), numFilesDATA - 1, cutMin, cutMax);
-    signaLossMC[b - 1] = new TH1F(Form("signalLossFractionMC_%i", b), Form("signalLossFractionMC_%i", b), numFilesMC - 1, cutMin, cutMax);
+    signaLossDATA[b - 1] = new TH1F(Form("signalLossFractionDATA_%i", b), Form("signalLossFractionDATA_%i", b), numFilesDATA - 1, cutMin - (cutMax - cutMin) / (numFilesDATA - 2) / 2, cutMax + (cutMax - cutMin) / (numFilesDATA - 2) / 2);
+    signaLossMC[b - 1] = new TH1F(Form("signalLossFractionMC_%i", b), Form("signalLossFractionMC_%i", b), numFilesMC - 1, cutMin - (cutMax - cutMin) / (numFilesDATA - 2) / 2, cutMax + (cutMax - cutMin) / (numFilesDATA - 2) / 2);
   }
 
   // DATA
@@ -288,7 +290,7 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   {
     Double_t xAxisLimits[2] = {cutMin - (cutMax - cutMin)*0.1, cutMax + (cutMax - cutMin)*0.1};
     Double_t yAxisLimitsUp[2] = {yMin, yMax};
-    Double_t yAxisLimitsLow[2] = {0.96, 1.04};
+    Double_t yAxisLimitsLow[2] = {yRatioMin, yRatioMax};
     TString xLabel = xLabelIn;
 
     Int_t colorPt[numPtBins];
@@ -322,7 +324,7 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     padSignalLossUp->cd();
     hDummySignalLoss->GetYaxis()->SetMaxDigits(3);
     hDummySignalLoss->GetYaxis()->SetDecimals(kTRUE);
-    StyleHistoMultiPlot(hDummySignalLoss, yAxisLimitsUp[0], yAxisLimitsUp[1], 1, 1, "cos(PA)", "Signal(x)/Signal(loosest)", "", 0, 0, 0, 1.5, 1.0, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
+    StyleHistoMultiPlot(hDummySignalLoss, yAxisLimitsUp[0], yAxisLimitsUp[1], 1, 1, "cos(PA)", "Signal(x)/Signal(loosest)", "", 0, 0, 0, 1.5, 1.2, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
     SetTickLength(hDummySignalLoss, 0.025, 0.03);
     TAxis *axisSignalLossDummy = hDummySignalLoss->GetYaxis();
     axisSignalLossDummy->ChangeLabel(1, -1, -1, -1, -1, -1, " ");
@@ -334,7 +336,7 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     for (Int_t i = 1; i <= hDummySignalLossLow->GetNbinsX(); i++)
       hDummySignalLossLow->SetBinContent(i, 1);
     padSignalLossLow->cd();
-    StyleHistoMultiPlot(hDummySignalLossLow, yAxisLimitsLow[0], yAxisLimitsLow[1], 1, 1, xLabel, "DATA/MC", "", 0, 0, 0, 1.0, 0.7, 0, 0.08, 0.08, 0.08, 0.07, 0.01);
+    StyleHistoMultiPlot(hDummySignalLossLow, yAxisLimitsLow[0], yAxisLimitsLow[1], 1, 1, xLabel, "DATA/MC", "", 0, 0, 0, 1.0, 0.9, 0, 0.08, 0.08, 0.08, 0.07, 0.01);
     SetTickLength(hDummySignalLossLow, 0.025, 0.03);
     TAxis *axisDummySignalLossLow = hDummySignalLossLow->GetYaxis();
     axisDummySignalLossLow->ChangeLabel(-1, -1, -1, -1, -1, -1, " "); // last 

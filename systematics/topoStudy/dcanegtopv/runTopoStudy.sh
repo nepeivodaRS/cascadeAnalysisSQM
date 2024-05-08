@@ -14,8 +14,9 @@ workingDir=\"${PWD}\"
 root -l "../topoStudy1D.C(2,
              \"DATA.txt\",
              \"MC.txt\",
-             \"R_{casc}\",
-             0.4, 0.6,
-             0.1, 1.5,
+             \"DCA_{negtopv}\",
+             0.10, 0.18,
+             0.55, 1.35,
+             0.96, 1.04,
              $workingDir,
-             \"_cascradius\")"
+             \"_dcanegtopv\")"

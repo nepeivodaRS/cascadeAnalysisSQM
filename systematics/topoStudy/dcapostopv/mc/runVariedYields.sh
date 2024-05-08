@@ -9,7 +9,7 @@ else
     mkdir $directory
 fi
 
-cut="dcabachtopv"
+cut="dcapostopv"
 
 workingDir=\"${PWD}\"
 
@@ -23,7 +23,7 @@ root -l -b -q "../../../../yield.C(2, 0, 0, 1,
                \"_DEF\")"
 
 #systematics
-for i in {1..8}
+for i in {1..9}
 do
     root -l -b -q "../../../../yield.C(2, 0, 0, 1,
                    $pathToMC,

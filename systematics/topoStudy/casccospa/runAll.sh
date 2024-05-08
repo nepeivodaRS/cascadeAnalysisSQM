@@ -1,6 +1,15 @@
 #! /usr/bin/env bash
+rm -r ./data/config/*
+rm -r ./data/results/*
+rm -r ./data/yieldsOut/*
+rm -r ./mc/results/*
+rm -r ./mc/config/*
+rm -r ./mc/yieldsOut/*
+rm DATA.txt
+rm MC.txt
 
-root -l "generatejson_systematics.cpp"
+root -l -q "generatejson_systematics.cpp"
+
 cd data
 ./runVariedAnalysis.sh
 ./runVariedYields.sh

@@ -9,15 +9,14 @@ else
     mkdir $directory
 fi
 
-workingDir=${PWD}
+workingDir=\"${PWD}\"
 
 root -l "../topoStudy1D.C(2,
-             \"casccospaDATA.txt\",
-             \"casccospaMC.txt\",
+             \"DATA.txt\",
+             \"MC.txt\",
              \"cos(PA)\",
-             0.970,
-             0.999,
-             0.1,
-             1.5,
-             \"/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/systematics/topoStudy/casccospa\",
+             0.970, 0.999,
+             0., 1.5,
+             0.96, 1.04,
+             $workingDir,
              \"_casccospa\")"

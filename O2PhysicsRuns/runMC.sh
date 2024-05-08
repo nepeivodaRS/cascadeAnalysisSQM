@@ -2,10 +2,12 @@
 # log file where the terminal output will be saved
 LOGFILE="cascpostprocessingLog.txt"
 
+formatted_date=$(date +"%Y-%m-%d")  # Format date as YYYY-MM-DD
+
 # directory of this script
 DIR_THIS="$(dirname "$(realpath "$0")")"
 
-OPTION="-b --configuration json:/${PWD}/jsonConfigs/ppRun3xi13tevData.json"
+OPTION="-b --configuration json:/${PWD}/jsonConfigs/ppRun3xi13tevMC.json"
 
 o2-analysis-lf-cascpostprocessing ${OPTION} \
 > "./logFiles/$LOGFILE" 2>&1
@@ -16,16 +18,15 @@ o2-analysis-lf-cascpostprocessing ${OPTION} \
 rc=$?
 if [ $rc -eq 0 ]; then
   echo "No problems!"
-  resultsDir="${PWD}/results"
+  resultsDir="${PWD}/results/run3_13tev/xi/lhc24b1/$formatted_date"
   # Check if the directory exists
   if [ -d "$resultsDir" ]; then
       echo "Directory '$resultsDir' exists."
   else
-      echo "Directory '$resultsDir' does not exist."
-      mkdir $resultsDir
+      mkdir -p $resultsDir
+      echo "Directory '$resultsDir' is created."
   fi
-  #mv "AnalysisResults.root" "${PWD}/results/run3_13tev/xi/lhc24b1/7may/AnalysisResults.root"
-  mv "AnalysisResults.root" "${PWD}/results/run3_13tev/xi/lhc22o_pass6/7may/AnalysisResults.root"
+  mv "AnalysisResults.root" "$resultsDir/AnalysisResults.root"
   mv "dpl-config.json" "${PWD}/jsonConfigs/latestUsed.json"
 else
   echo "Error: Exit code $rc"

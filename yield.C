@@ -274,6 +274,7 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
 
     Double_t leftRap = -0.5;
     Double_t rightRap = 0.5;
+
     // Reconstructed cascades (only true ones)
     hCascadePlusTrue = (TH2F*)fileDataPPIn->Get("lf-cascpostprocessing/hCascPlusMassvsPtTrueRec");
     hCascadeMinusTrue = (TH2F*)fileDataPPIn->Get("lf-cascpostprocessing/hCascMinusMassvsPtTrueRec");
@@ -289,7 +290,6 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hProjPtCascadeRecSumClone = (hCascadeSumTrueClone->ProjectionX());
     hProjPtCascadeRecSumClone->Sumw2();
     hProjPtCascadeRecSumClone->Write();
-
     // BG counts
     hCascadePlusBG = (TH2F*)fileDataPPIn->Get("lf-cascpostprocessing/hCascPlusMassvsPtBG");
     hCascadeMinusBG = (TH2F*)fileDataPPIn->Get("lf-cascpostprocessing/hCascMinusMassvsPtBG");
@@ -319,6 +319,7 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     }
     hInvMass3D->GetXaxis()->SetRange(multLowBinInvMass, multUpBinInvMass);
   }
+
   
   hInvMass3D->GetYaxis()->SetRangeUser(binpt[0], binpt[numPtBins]);
   hInvMass3D->GetZaxis()->SetRangeUser(minRangeDisplay[partType], maxRangeDisplay[partType]);
@@ -742,8 +743,6 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     StyleHisto(hGenCountsClone, 1e-6, hGenCountsClone->GetMaximum()*1e2, kBlack, 20, "#it{p}_{T} (GeV/#it{c})", sdNdPtdY, "", 0, 0, 0, 1.0, 1.1, 1, 0.04, 0.04);
     hGenCountsClone->Write();
   }
-
-
 
   delete[] binpt;
 

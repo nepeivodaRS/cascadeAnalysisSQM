@@ -105,11 +105,11 @@ void generatejson_systematics()
     float bachBaryonCosPA = 2;
     float bachBaryonDCAxyToPV = 0.0199999996;
     float casccospa = 0.995;
-    float cascradius = 0.5;
+    float cascradius = 0.9;
     float dcabachtopv = 0.04;
     float dcacascdau = 0.8;
-    float dcanegtopv = 0.03;
-    float dcapostopv = 0.03;
+    float dcanegtopv = 0.1;
+    float dcapostopv = 0.1;
     float dcav0dau = 0.4;
     float dcav0topv = 0;
     float etadau = 0.8;

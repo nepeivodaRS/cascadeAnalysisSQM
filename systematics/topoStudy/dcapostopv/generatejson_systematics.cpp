@@ -45,7 +45,7 @@ std::string generateJson(float bachBaryonCosPA, float bachBaryonDCAxyToPV, float
     json << "        \"bachBaryonCosPA\": \"" << std::fixed << std::setprecision(1) << bachBaryonCosPA << "\"," << std::endl;
     json << "        \"bachBaryonDCAxyToPV\": \"" << std::fixed << std::setprecision(3) << bachBaryonDCAxyToPV << "\"," << std::endl;
     json << "        \"casccospa\": \"" << std::fixed << std::setprecision(4) << casccospa << "\"," << std::endl;
-    json << "        \"cascradiusMin\": \"" << std::fixed << std::setprecision(4) << cascradius << "\"," << std::endl;
+    json << "        \"cascradiusMin\": \"" << std::fixed << std::setprecision(2) << cascradius << "\"," << std::endl;
     json << "        \"cascradiusMax\": \"" << std::fixed << std::setprecision(2) << 1000 << "\"," << std::endl;
     json << "        \"dcabachtopv\": \"" << std::fixed << std::setprecision(2) << dcabachtopv << "\"," << std::endl;
     json << "        \"dcacascdau\": \"" << std::fixed << std::setprecision(1) << dcacascdau << "\"," << std::endl;
@@ -105,11 +105,11 @@ void generatejson_systematics()
     float bachBaryonCosPA = 2;
     float bachBaryonDCAxyToPV = 0.0199999996;
     float casccospa = 0.995;
-    float cascradius = 0.5;
+    float cascradius = 0.9;
     float dcabachtopv = 0.04;
     float dcacascdau = 0.8;
-    float dcanegtopv = 0.03;
-    float dcapostopv = 0.03;
+    float dcanegtopv = 0.1;
+    float dcapostopv = 0.1;
     float dcav0dau = 0.4;
     float dcav0topv = 0;
     float etadau = 0.8;
@@ -158,25 +158,25 @@ void generatejson_systematics()
     saveJsonToFile(jsondefMC, filenameDEFMC);
 
     //Limits:
-    double casccospalim[2] = {0.970, 0.999};
-    double cascradiuslim[2] = {0.4, 0.6};
-    double dcabachtopvlim[2] = {0.03, 0.1};
-    double dcacascdaulim[2] = {0.7, 1.5};
-    double dcanegtopvlim[2] = {0.02, 0.1};
-    double dcapostopvlim[2] = {0.02, 0.1};
-    double dcav0daulim[2] = {0.3, 1.0};
-    double dcav0topvlim[2] = {0., 0.};
-    double lambdamasswinlim[2] = {0.006, 0.01};
-    double nsigmatpcKlim[2] = {3, 5};
-    double nsigmatpcPilim[2] = {3, 5};
-    double nsigmatpcPrlim[2] = {3, 5};
-    double proplifetimelim[2] = {4, 8};
-    double v0cospalim[2] = {0.96, 0.99};
-    double v0radiuslim[2] = {1.1, 1.3};
-    double tpccrrowslim[2] = {40, 80};
-    double rejcomplim[2] = {0., 0.};
+    // double casccospalim[2] = {0.970, 0.999};
+    // double cascradiuslim[2] = {0.9, 1.6};
+    // double dcabachtopvlim[2] = {0.03, 0.1};
+    // double dcacascdaulim[2] = {0.7, 1.5};
+    // double dcanegtopvlim[2] = {0.02, 0.10};
+    double dcapostopvlim[2] = {0.10, 0.18};
+    // double dcav0daulim[2] = {0.3, 1.0};
+    // double dcav0topvlim[2] = {0., 0.};
+    // double lambdamasswinlim[2] = {0.006, 0.01};
+    // double nsigmatpcKlim[2] = {3, 5};
+    // double nsigmatpcPilim[2] = {3, 5};
+    // double nsigmatpcPrlim[2] = {3, 5};
+    // double proplifetimelim[2] = {4, 8};
+    // double v0cospalim[2] = {0.96, 0.99};
+    // double v0radiuslim[2] = {1.1, 1.3};
+    // double tpccrrowslim[2] = {40, 80};
+    // double rejcomplim[2] = {0., 0.};
 
-    const int njson = 20;
+    const int njson = 9;
 
     std::string filename[njson];
     std::string filenameMC[njson];
@@ -202,7 +202,7 @@ void generatejson_systematics()
         // v0radius = generateRandomX(v0radiuslim[0], v0radiuslim[1]);
         // mintpccrrows = generateRandomX(tpccrrowslim[0], tpccrrowslim[1]);
 
-        cascradius = cascradiuslim[0] + i * (cascradiuslim[1] - cascradiuslim[0]) / njson;
+        dcapostopv = dcapostopvlim[0] + i * (dcapostopvlim[1] - dcapostopvlim[0]) / (njson - 1) ;
 
         std::string json = generateJson(bachBaryonCosPA, bachBaryonDCAxyToPV, casccospa, cascradius, dcabachtopv,
                                         dcacascdau, dcanegtopv, dcapostopv, dcav0dau, dcav0topv, lambdamasswin, masswin,
