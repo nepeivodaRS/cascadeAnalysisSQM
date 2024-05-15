@@ -14,9 +14,10 @@ workingDir=\"${PWD}\"
 root -l "../topoStudy1D.C(2,
              \"DATA.txt\",
              \"MC.txt\",
-             \"cos(PA)\",
-             0.970, 0.999,
+             \"casc cos(PA)\",
+             0.969, 0.999,
              0., 1.5,
              0.96, 1.04,
+             true,
              $workingDir,
              \"_casccospa\")"

@@ -1,22 +1,42 @@
+#include "../help.h"
+#include "../effHelp.h"
+
 void prephisto(TH1D* h, int col);
 
-void CalculateTotalSystematics() {
+void getTotalSystematics(const Int_t nParticle = 2) // 0-2 : xi, 3-5 : omega
+{
+  // Setup pt binning
+  Int_t numPt = 0;
+  Int_t partType;
+  if (nParticle <= 2) {
+    numPt = numPtXi; // Xi
+    partType = 0;
+  } else {
+    numPt = numPtOmega; // Omega
+    partType = 1;
+  }
 
-  const Int_t numPt = 18;
-  Float_t binpt[numPt + 1] = {0.6, 0.8, 1.0,
-                              1.2, 1.4, 1.6, 1.8, 2.0,
-                              2.2, 2.4, 2.6, 2.8, 3.0,
-                              3.5, 4.0, 4.5, 5.0, 6.0, 8.0};
+  Double_t* binpt = new Double_t[numPt + 1];
+
+  if (nParticle <= 2) {
+    for (int i = 0; i < (numPt + 1); ++i) {
+        binpt[i] = binptXi[i]; // Xi
+      }
+  } else {
+    for (int i = 0; i < (numPt + 1); ++i) {
+        binpt[i] = binptOmega[i]; // Omega
+      }
+  }
 
   TH1D *hPt = new TH1D("hPt", "hPt", numPt, binpt);
 
   // Cut variation (multi-trial)
-  TFile *fMultiTrial = TFile::Open("SystMultiTrial.root");
+  TFile *fMultiTrial = TFile::Open("./sourcesOfSyst/multiTrialSyst-Xi.root");
   TH1D *hSystMultiTrial = (TH1D *)fMultiTrial->Get("hSystMultiTrial");
   prephisto(hSystMultiTrial, kGreen+1);
 
   // Material budget
-  TFile *matbudg = TFile::Open("systMatBudget-Omega-Run2.root");
+  TFile *matbudg = TFile::Open("./sourcesOfSyst/matBudgetSystRun2-Xi.root");
   TF1 *fmatbudg = (TF1 *)matbudg->Get("funcFit");
   TH1D *hSystMatBudg = (TH1D *)hPt->Clone("hSystMatBudg");
   hSystMatBudg->Reset();
@@ -35,14 +55,14 @@ void CalculateTotalSystematics() {
   }
   prephisto(hSystEffMultDep, kRed);
 
-  // OOB pileup
-  TFile *fOOB = TFile::Open("OOBSystOmega.root");
-  TH1D *hSystOOB = (TH1D *)fOOB->Get("hSystOOB");
-  prephisto(hSystOOB, kMagenta);
+  // // OOB pileup
+  // TFile *fOOB = TFile::Open("OOBSystOmega.root");
+  // TH1D *hSystOOB = (TH1D *)fOOB->Get("hSystOOB");
+  // prephisto(hSystOOB, kMagenta);
 
-  // Bkg pileup
-  TFile *fBkg = TFile::Open("BkgSystOmega.root");
-  TH1D *hBkgSyst = (TH1D *)fBkg->Get("hBkgSyst");
+  // Bkg variation
+  TFile *fBkg = TFile::Open("./sourcesOfSyst/SystBKG-Xi.root");
+  TH1D *hBkgSyst = (TH1D *)fBkg->Get("hSystBKG");
   hBkgSyst->SetLineStyle(1);
   prephisto(hBkgSyst, kOrange+1);
 
@@ -55,10 +75,8 @@ void CalculateTotalSystematics() {
       syst += hSystMatBudg->GetBinContent(hSystMatBudg->FindBin(hSystTotal->GetBinCenter(i))) * hSystMatBudg->GetBinContent(hSystMatBudg->FindBin(hSystTotal->GetBinCenter(i)));
       syst += hSystEffMultDep->GetBinContent(hSystEffMultDep->FindBin(hSystTotal->GetBinCenter(i))) * hSystEffMultDep->GetBinContent(hSystEffMultDep->FindBin(hSystTotal->GetBinCenter(i)));
       syst += hSystMultiTrial->GetBinContent(hSystMultiTrial->FindBin(hSystTotal->GetBinCenter(i))) * hSystMultiTrial->GetBinContent(hSystMultiTrial->FindBin(hSystTotal->GetBinCenter(i)));
-      syst += hSystOOB->GetBinContent(hSystOOB->FindBin(hSystTotal->GetBinCenter(i))) * hSystOOB->GetBinContent(hSystOOB->FindBin(hSystTotal->GetBinCenter(i)));
+      //syst += hSystOOB->GetBinContent(hSystOOB->FindBin(hSystTotal->GetBinCenter(i))) * hSystOOB->GetBinContent(hSystOOB->FindBin(hSystTotal->GetBinCenter(i)));
       syst += hBkgSyst->GetBinContent(hBkgSyst->FindBin(hSystTotal->GetBinCenter(i))) * hBkgSyst->GetBinContent(hBkgSyst->FindBin(hSystTotal->GetBinCenter(i)));
-      syst += hSystAnch->GetBinContent(hSystAnch->FindBin(hSystTotal->GetBinCenter(i))) * hSystAnch->GetBinContent(hSystAnch->FindBin(hSystTotal->GetBinCenter(i)));
-      syst += hSystSgnLoss->GetBinContent(hSystSgnLoss->FindBin(hSystTotal->GetBinCenter(i))) * hSystSgnLoss->GetBinContent(hSystSgnLoss->FindBin(hSystTotal->GetBinCenter(i)));
 
       syst = TMath::Sqrt(syst);
       hSystTotal->SetBinContent(i, syst);
@@ -66,58 +84,56 @@ void CalculateTotalSystematics() {
   prephisto(hSystTotal, kBlack);
 
   //Canvas
-  TCanvas *cTotalSyst = new TCanvas("cTotalSyst", " ", 1400, 1000);
-  cTotalSyst->SetRightMargin(0.15);
-  cTotalSyst->SetLeftMargin(0.15);
-  cTotalSyst->SetBottomMargin(0.15);
+  // TCanvas *cTotalSyst = new TCanvas("cTotalSyst", " ", 1400, 1000);
+  // cTotalSyst->SetRightMargin(0.15);
+  // cTotalSyst->SetLeftMargin(0.15);
+  // cTotalSyst->SetBottomMargin(0.15);
+
+  TCanvas *cTotalSyst = new TCanvas("cTotalSyst","cTotalSyst", 800, 600);
+  cTotalSyst->cd();
+  StyleCanvas(cTotalSyst, 0.14, 0.05, 0.11, 0.15);
   cTotalSyst->SetGridy();
   cTotalSyst->SetGridx();
+  StyleHisto(hSystTotal, 0., 0.075, color[0], MarkerMult[0], sPt, "Systematic uncertainties", "", 0, 0, 0, 1.0, 1.25, SizeMult[0], 0.04, 0.04);
   hSystTotal->SetStats(kFALSE);
   hSystTotal->SetLineWidth(2);
-  hSystTotal->SetYTitle("systematic uncertainty");
-  hSystTotal->SetXTitle("p_{T} (GeV/c)");
-  hSystTotal->SetTitle("Systematic uncertainties");
-  hSystTotal->GetYaxis()->SetTitleSize(0.05);
-  hSystTotal->GetYaxis()->SetTitleOffset(1.4);
-  hSystTotal->GetXaxis()->SetTitleSize(0.05);
-  hSystTotal->GetXaxis()->SetTitleOffset(1.);
-  hSystTotal->GetYaxis()->SetRangeUser(0., 0.15);
+
+  // hSystTotal->SetYTitle("systematic uncertainty");
+  // hSystTotal->SetXTitle("p_{T} (GeV/c)");
+  // hSystTotal->SetTitle("Systematic uncertainties");
+  // hSystTotal->GetYaxis()->SetTitleSize(0.05);
+  // hSystTotal->GetYaxis()->SetTitleOffset(1.4);
+  // hSystTotal->GetXaxis()->SetTitleSize(0.05);
+  // hSystTotal->GetXaxis()->SetTitleOffset(1.);
+  // hSystTotal->GetYaxis()->SetRangeUser(0., 0.15);
 
   hSystTotal->Draw();
   hSystMatBudg->Draw("same");
   hSystEffMultDep->Draw("same");
   hSystMultiTrial->Draw("same");
-  hSystOOB->Draw("same");
+  //hSystOOB->Draw("same");
   hBkgSyst->Draw("same");
-  hSystAnch->Draw("same");
-  hSystSgnLoss->Draw("same");
 
-  TLegend *leg = new TLegend(0.4, 0.6, 0.88, 0.88);
+  TLegend *leg = new TLegend(0.47, 0.57, 0.95, 0.85);
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
   leg->AddEntry(hSystTotal, "Total", "l");
   leg->AddEntry(hSystMatBudg, "Material budget", "l");
   leg->AddEntry(hSystEffMultDep, "Efficiency mult. dep.", "l");
-  leg->AddEntry(hSystOOB, "OOB pileup", "l");
+  //leg->AddEntry(hSystOOB, "OOB pileup", "l");
   leg->AddEntry(hSystMultiTrial, "Cut variation (multi-trial)", "l");
   leg->AddEntry(hBkgSyst, "Background", "l");
-  leg->AddEntry(hSystAnch, "Anchoring", "l");
-  leg->AddEntry(hSystSgnLoss, "Signal loss", "l");
 
   leg->Draw("same");
 
-  cTotalSyst->SaveAs("images/TotalSystematics.png");
-  cTotalSyst->SaveAs("images/TotalSystematics.pdf");
-
-  TString outputfilename = Form("SysFiles/SpectraSystematics-Omega-13TeV-FT0M-0-100.root");
+  TString outputfilename = Form("./sourcesOfSyst/totalSystematics.root");
   TFile *CreateFile = new TFile(outputfilename, "recreate");
   hSystTotal->Write();
   hSystMatBudg->Write();
   hSystEffMultDep->Write();
-  hSystOOB->Write();
+  //hSystOOB->Write();
   hSystMultiTrial->Write();
   hBkgSyst->Write();
-  hSystAnch->Write();
   CreateFile->Close();
 }
 

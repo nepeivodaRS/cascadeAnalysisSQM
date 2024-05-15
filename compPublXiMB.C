@@ -23,8 +23,10 @@ void StyleHisto(TH1F *histo, Double_t Low, Double_t Up, Int_t color, Int_t style
   histo->GetYaxis()->SetLabelOffset(yLabelOffset);
 }
 
-void compPublXiMB(const TString fileData = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/yieldsOutEffCorr/yield_XiPm_MB_inel0_run2.root", 
-                  const TString workingDir = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM")
+void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
+                 const Int_t inel = 0, // inel > N (0/1)
+                 const TString workingDir = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM",
+                 const TString postFix = "")
 {
   // Start of Code
   std::cout << "\x1B[1;33m"; // Set text color to yellow
@@ -67,17 +69,59 @@ void compPublXiMB(const TString fileData = "/Users/rnepeiv/workLund/PhD_work/run
     e1 = hHEPYielde1->GetBinContent(iBin);
     e2 = hHEPYielde2->GetBinContent(iBin);
     e3 = hHEPYielde3->GetBinContent(iBin); // uncorrelated
-    hHEPYield->SetBinError(iBin, sqrt(pow(e1, 2) + pow(e2, 2)) + e3);
+    //hHEPYield->SetBinError(iBin, sqrt(pow(e1, 2) + pow(e2, 2)) + e3);
+    hHEPYield->SetBinError(iBin, sqrt(pow(e1, 2))); // only statistical uncert.
   }
 
-  // Efficiency Corrected Data File
-  TFile* fileDataIn = TFile::Open(fileData);
-  if (!fileDataIn || fileDataIn->IsZombie()) {
-      std::cerr << "Error opening eff. corr. data file!" << std::endl;
+  // Files with yields in all mult. classes + MB
+  TFile* fileDataIn[numMult + 1];
+  // MB
+  fileDataIn[0] = TFile::Open(workingDir + "/yieldsOutEffCorr" +  "/yield_" + particleNames[nParticle] + "_MB_inel" + inel + postFix + ".root");
+  if (!fileDataIn[0] || fileDataIn[0]->IsZombie()) {
+    std::cerr << "Error opening input data file for MB!" << std::endl;
+    return;
+  } else {
+    cout << "file for MB yield is opened"<< std::endl;
+  }
+  // in mult. classes
+  for (Int_t iFile = 1; iFile < numMult + 1; iFile++) {
+    TString fileInPath = workingDir + "/yieldsOutEffCorr" + "/yield_" + particleNames[nParticle] + "_" + multiplicityPerc[iFile - 1] + "-" + multiplicityPerc[iFile] + "_inel" + inel + postFix  + ".root";
+    fileDataIn[iFile] = TFile::Open(fileInPath);
+    if (!fileDataIn[iFile] || fileDataIn[iFile]->IsZombie()) {
+      std::cerr << "Error opening input data file for mult. class: " << multiplicityPerc[iFile - 1] <<  " - " << multiplicityPerc[iFile] << std::endl;
       return;
+    } else {
+      cout << "file for mult. class: " << multiplicityPerc[iFile - 1] <<  " - " << multiplicityPerc[iFile] << " is opened"<< std::endl;
+    }
   }
 
-  TDirectory* yieldEffCorrDir = fileDataIn->GetDirectory("effCorrYield");
+  TH1F* hYield[numMult + 1];
+  TDirectory* yieldDir[numMult + 1];
+
+  // Get yields
+  for (Int_t iFile = 0; iFile < numMult + 1; iFile++) {
+    yieldDir[iFile] = fileDataIn[iFile]->GetDirectory("effCorrYield");
+    if (!yieldDir[iFile])
+    {
+      std::cerr << "`effCorrYield` directory is not found!" << std::endl;
+      return;
+    }
+
+    hYield[iFile] = (TH1F *)yieldDir[iFile]->Get("Yield_" + particleNames[nParticle]);
+  }
+
+  TH1F* hYieldMBsummed;
+  hYieldMBsummed = (TH1F*)hYield[0]->Clone("hYieldMBsummed");
+  hYieldMBsummed->Reset();
+  for (Int_t iFile = 1; iFile < numMult + 1; iFile++) {
+    TH1F* hYieldPerPerc = (TH1F*)hYield[iFile]->Clone("hYieldPerPerc");
+    hYieldPerPerc->Scale(multiplicityPerc[iFile] - multiplicityPerc[iFile - 1]);
+    std::cout << "class width: " << (multiplicityPerc[iFile] - multiplicityPerc[iFile - 1]) << std::endl;
+    hYieldMBsummed->Add(hYieldPerPerc);
+  }
+  hYieldMBsummed->Scale(1. / 100);
+
+  TDirectory* yieldEffCorrDir = fileDataIn[0]->GetDirectory("effCorrYield");
   if (!yieldEffCorrDir)
   {
     std::cerr << "`effCorrYield` directory in data is not found!" << std::endl;
@@ -92,7 +136,8 @@ void compPublXiMB(const TString fileData = "/Users/rnepeiv/workLund/PhD_work/run
   }
 
   TH1F* hYieldsDenom = (TH1F *)hHEPYield->Clone("YieldHEPDataClone");
-  TH1F* hYieldsRatio = (TH1F *)hEffCorrYield->Clone("YieldClone");
+  //TH1F* hYieldsRatio = (TH1F *)hYield[0]->Clone("YieldClone");
+  TH1F* hYieldsRatio = (TH1F *)hYieldMBsummed->Clone("YieldClone");
   hYieldsRatio->Divide(hYieldsDenom);
 
   Double_t yieldYLow[2] = {0.1*1e-5, 0.2*1e-8};
@@ -132,6 +177,7 @@ void compPublXiMB(const TString fileData = "/Users/rnepeiv/workLund/PhD_work/run
   legendTitle->SetFillColorAlpha(0.,0.);
   legendTitle->AddEntry("", "#bf{ALICE Work In Progress}", "");
   legendTitle->AddEntry("", particleSymnbols[2] + ", |y| < 0.5", "");
+  legendTitle->AddEntry("", "Statistical uncert. only", "");
 
   Int_t compStyle = 3;
   StyleHisto(hEffCorrYield, yieldYLow[partType], yieldYUp[partType], color[0], MarkerMult[0], "", hEffCorrYield->GetYaxis()->GetTitle(), "", 0, 0, 0, 1.5, 1.0, SizeMult[0], 0.0, 0.05, 0.0, 0.035, 0.005);
@@ -155,7 +201,7 @@ void compPublXiMB(const TString fileData = "/Users/rnepeiv/workLund/PhD_work/run
   for (Int_t i = 1; i <= hDummyLow->GetNbinsX(); i++)
     hDummyLow->SetBinContent(i, 1);
   padYieldLow->cd();
-  StyleHisto(hDummyLow, 0.5 , 1.1, 1, 1, "#it{p}_{T} (GeV/#it{c})", "Ratio to Published", "", 0, 0, 0, 1.0, 0.7, 0, 0.08, 0.08, 0.08, 0.07, 0.01);
+  StyleHisto(hDummyLow, 0.8 , 1.2, 1, 1, "#it{p}_{T} (GeV/#it{c})", "Ratio to Published", "", 0, 0, 0, 1.0, 0.7, 0, 0.08, 0.08, 0.08, 0.07, 0.01);
   SetTickLength(hDummyLow, 0.025, 0.03);
   hDummyLow->GetXaxis()->SetRangeUser(0, hYieldsRatio->GetXaxis()->GetBinUpEdge(hYieldsRatio->GetNbinsX()) + 0.5);
   hDummyLow->GetYaxis()->CenterTitle();
@@ -166,12 +212,12 @@ void compPublXiMB(const TString fileData = "/Users/rnepeiv/workLund/PhD_work/run
 
   padYieldUp->cd();
   hEffCorrYield->Draw("same ex0");
-  hEffCorrYield->SetFillStyle(0);
-  hEffCorrYield->Draw("same e2");
+  //hEffCorrYield->SetFillStyle(0);
+  //hEffCorrYield->Draw("same e2");
   legYield->AddEntry(hEffCorrYield, "pp, #sqrt{#it{s}} = 13.6 TeV", "pef");
   hHEPYield->Draw("same ex0");
-  hHEPYield->SetFillStyle(0);
-  hHEPYield->Draw("same e2");
+  //hHEPYield->SetFillStyle(0);
+  //hHEPYield->Draw("same e2");
   legYield->AddEntry(hHEPYield, "Eur.Phys.J.C.80 (2020) 167, pp, #sqrt{#it{s}} = 13 TeV", "pef");
   padYieldUp->SetLogy();
 

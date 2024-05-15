@@ -25,7 +25,8 @@ void StyleHisto(TH1F *histo, Double_t Low, Double_t Up, Int_t color, Int_t style
 
 void purityInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
                   const Int_t inel = 0, // inel > N (0/1)
-                  const TString workingDir = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM")
+                  const TString workingDir = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM",
+                  const TString postFix = "")
 {
   //gROOT->SetBatch(kTRUE);
   // Start of Code
@@ -35,13 +36,13 @@ void purityInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
 
   gStyle->SetOptStat(0);
 
-  TString outputfilePath = workingDir + "/purityInMult/" + "sigmaInMult_" + particleNames[nParticle] + "_inel" + inel + ".root";
+  TString outputfilePath = workingDir + "/purityInMult/" + "sigmaInMult_" + particleNames[nParticle] + "_inel" + inel + postFix + ".root";
   TFile *outputfile = new TFile(outputfilePath, "RECREATE");
 
   // Files with purities in all mult. classes + MB
   TFile* fileDataIn[numMult + 1];
   // MB
-  fileDataIn[0] = TFile::Open(workingDir + "/yieldsOut" +  "/yield_" + particleNames[nParticle] + "_MB_inel" + inel + ".root");
+  fileDataIn[0] = TFile::Open(workingDir + "/yieldsOut" +  "/yield_" + particleNames[nParticle] + "_MB_inel" + inel + postFix + ".root");
   if (!fileDataIn[0] || fileDataIn[0]->IsZombie()) {
     std::cerr << "Error opening input data file for MB!" << std::endl;
     return;
@@ -50,7 +51,7 @@ void purityInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   }
   // in mult. classes
   for (Int_t iFile = 1; iFile < numMult + 1; iFile++) {
-    TString fileInPath = workingDir + "/yieldsOut" + "/yield_" + particleNames[nParticle] + "_" + multiplicityPerc[iFile - 1] + "-" + multiplicityPerc[iFile] + "_inel" + inel + ".root";
+    TString fileInPath = workingDir + "/yieldsOut" + "/yield_" + particleNames[nParticle] + "_" + multiplicityPerc[iFile - 1] + "-" + multiplicityPerc[iFile] + "_inel" + inel + postFix + ".root";
     fileDataIn[iFile] = TFile::Open(fileInPath);
     if (!fileDataIn[iFile] || fileDataIn[iFile]->IsZombie()) {
       std::cerr << "Error opening input data file for mult. class: " << multiplicityPerc[iFile - 1] <<  " - " << multiplicityPerc[iFile] << std::endl;
@@ -141,7 +142,7 @@ void purityInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hDummy->SetBinContent(i, 1e-12);
   canvasPurity->cd();
   padPurityUp->cd();
-  StyleHisto(hDummy, 0.4, 1.1, 1, 1, "#it{p}_{T} (GeV/#it{c})", "S/(B+S)", "", 0, 0, 0, 1.5, 1.0, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
+  StyleHisto(hDummy, 0.55, 1.2, 1, 1, "#it{p}_{T} (GeV/#it{c})", "S/(B+S)", "", 0, 0, 0, 1.5, 1.0, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
   SetTickLength(hDummy, 0.025, 0.03);
   TAxis *axisMeanDummy = hDummy->GetYaxis();
   axisMeanDummy->ChangeLabel(1, -1, -1, -1, -1, -1, " ");

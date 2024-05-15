@@ -14,9 +14,10 @@ workingDir=\"${PWD}\"
 root -l "../topoStudy1D.C(2,
              \"DATA.txt\",
              \"MC.txt\",
-             \"DCA_{postopv}\",
-             0.10, 0.18,
+             \"DCA_{postopv}, cm\",
+             0.00, 0.10,
              0.55, 1.35,
              0.96, 1.04,
+             true,
              $workingDir,
              \"_dcapostopv\")"

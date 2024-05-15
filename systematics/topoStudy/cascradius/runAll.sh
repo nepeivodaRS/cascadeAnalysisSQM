@@ -5,6 +5,7 @@ rm -r ./data/yieldsOut/*
 rm -r ./mc/results/*
 rm -r ./mc/config/*
 rm -r ./mc/yieldsOut/*
+rm -r ./results/*
 rm DATA.txt
 rm MC.txt
 
@@ -21,4 +22,4 @@ find "$(pwd)" -type f -name "*.root" > ../../MC.txt
 cd ../../data/yieldsOut
 find "$(pwd)" -type f -name "*.root" > ../../DATA.txt
 cd ../../
-./runTopoStudy.sh
+#./runTopoStudy.sh

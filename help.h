@@ -34,6 +34,13 @@ void DrawHorLine(Double_t x, Double_t y){
   line->Draw("same"); // Draw the line on the same canvas
 }
 
+void DrawHorLineColor(Double_t x, Double_t y, Color_t color){
+  TLine *line = new TLine(0., y, x, y);
+  line->SetLineStyle(2); // Set the line style to dashed (2)
+  line->SetLineColor(color); // Set the line color (kRed is a ROOT predefined color)
+  line->Draw("same"); // Draw the line on the same canvas
+}
+
 void DrawVertLine(Double_t x, Double_t yMin, Double_t yMax, Color_t color){
   TLine *line = new TLine(x, yMin, x, yMax);
   line->SetLineStyle(2); // Set the line style to dashed (2)
@@ -131,7 +138,7 @@ void ListHistogramsInDirectory(TDirectory *dir) {
 Double_t pdgMass[2] = {1.32171, 1.67245};
 
 //Int_t ColorPt[] = {634, 628, 807, kOrange - 4, 797, 815, 418, 429, 867, 856, 601, kViolet, kPink + 9, kPink + 1, 1};
-Int_t MarkerMult[] = {20, 33, 34, 29, 20, 21, 33, 34, 29, 20, 21, 33, 34, 29, 21};
+Int_t MarkerMult[] = {20, 33, 34, 29, 20, 21, 33, 34, 29, 20, 21, 33, 34, 29, 21, 21, 21, 21, 21};
 //Double_t SizeMult[] = {2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8};
 Double_t SizeMult[] = {1.5, 1.8, 1.5, 1.8, 1.5, 1.5, 1.8, 1.5, 1.8, 1.5, 1.5, 1.8, 1.5, 1.8, 1.5};
 
@@ -147,9 +154,12 @@ TString sInvMass = "invariant mass (GeV/#it{c}^{2})";
 TString sPt = "#it{p}_{T} (GeV/#it{c})";
 TString sdNdPt = "1/#it{N}_{ev} d#it{N}/d#it{p}_{T} [(GeV/#it{c})^{-1}]";
 TString sdNdPtdY = "1/#it{N}_{ev} d^{2}#it{N}/(d#it{p}_{T}d#it{y}) [(GeV/#it{c})^{-1}]";
+TString sdNdY = "1/#it{N}_{ev} d#it{N}/d#it{y}";
 
-const Int_t numMult = 9; // number of multiplicity sub-intervals
-Double_t multiplicityPerc[numMult + 1] = {0, 1, 5, 10, 20, 30, 40, 50, 70, 100};
+// const Int_t numMult = 13; // number of multiplicity sub-intervals
+// Double_t multiplicityPerc[numMult + 1] = {0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 50, 70, 85, 100};
+const Int_t numMult = 10; // number of multiplicity sub-intervals
+Double_t multiplicityPerc[numMult + 1] = {0, 1, 5, 10, 15, 20, 30, 40, 50, 70, 100};
 
 const Int_t numMultEff = 3; // number of multiplicity sub-intervals for efficiency correction
 Double_t multiplicityPercEff[numMultEff + 1] = {0, 30, 70, 100};
@@ -179,16 +189,16 @@ Double_t binptXi[numPtXi + 1] = {0.6, 0.8, 1.0,
 // const Int_t numPtXi = 5;
 // Double_t binptXi[numPtXi + 1] = {0.6, 1.6, 2.6, 3.5, 4.5, 8.0};
 // const Int_t numPtXi = 1;
-// Double_t binptXi[numPtXi + 1] = {0.6, 8.0};
+// Double_t binptXi[numPtXi + 1] = {0.6, 8.0};                         
 
-int FIptxi = TColor::CreateGradientColorTable(NRGBs,stops,red,green,blue,numPtXi);                                
-
-// Xi binning to compare with Run 2
+//Xi binning to compare with Run 2
 // const Int_t numPtXi = 13; // to compare with Run 2
 // Double_t binptXi[numPtXi + 1] = {0.6, 1.0,
 //                                 1.2, 1.4, 1.6, 1.8, 2.0,
 //                                 2.2, 2.5, 2.9, 3.4,
 //                                 4.0, 5.0, 6.5};
+
+int FIptxi = TColor::CreateGradientColorTable(NRGBs,stops,red,green,blue,numPtXi);       
 
 // Omega binning
 const Int_t numPtOmega = 17;
@@ -202,5 +212,5 @@ Double_t binptOmega[numPtOmega + 1] = {0.8, 1.0,
 //Double_t ScaleFactor[] = {16384, 8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1};
 //Double_t ScaleFactorMB = pow(2, 19);
 // Xi
-Double_t ScaleFactor[] = {256, 128, 64, 32, 16, 8, 4, 2, 1};
-Double_t ScaleFactorMB = pow(2, 12);
+Double_t ScaleFactor[] = {4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1};
+Double_t ScaleFactorMB = pow(2, 16);

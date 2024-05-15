@@ -74,6 +74,21 @@ void StyleHistoMultiPlot(THisto *histo, Double_t Low, Double_t Up, Int_t color, 
   histo->GetYaxis()->SetLabelOffset(yLabelOffset);
 }
 
+template <typename THisto>
+void Style2DHisto(THisto *histo, TString titleX, TString titleY, TString title,
+  Double_t xTitleSize, Double_t yTitleSize, 
+  Double_t xLabelSize, Double_t yLabelSize, Double_t zLabelSize)
+{
+  histo->GetXaxis()->SetTitle(titleX);
+  histo->GetYaxis()->SetTitle(titleY);
+  histo->SetTitle(title);
+  histo->GetXaxis()->SetTitleSize(xTitleSize);
+  histo->GetYaxis()->SetTitleSize(yTitleSize);
+  histo->GetXaxis()->SetLabelSize(xLabelSize);
+  histo->GetYaxis()->SetLabelSize(yLabelSize);
+  histo->GetZaxis()->SetLabelSize(zLabelSize);
+}
+
 void StyleCanvas(TCanvas *canvas, Float_t LMargin, Float_t RMargin, Float_t TMargin, Float_t BMargin)
 {
   canvas->SetFillColor(0);
@@ -111,5 +126,18 @@ void DrawLine(Double_t x, Double_t y, const Char_t* labelText){
   label->SetTextSize(0.03); // Set the text size
   label->SetTextAngle(90);
   label->SetTextColor(kBlack); // Set the text color to match the line
+  label->Draw();
+}
+
+void DrawHorLineSyst(Double_t xMin, Double_t xMax, Double_t y, const Char_t* labelText){
+  TLine *line = new TLine(xMin, y, xMax, y);
+  line->SetLineStyle(2); // Set the line style to dashed (2)
+  line->SetLineColor(kGray); // Set the line color (kRed is a ROOT predefined color)
+  line->Draw("same"); // Draw the line on the same canvas
+
+  TLatex *label = new TLatex(xMin+(xMax-xMin)/20, y + 0.01/3., labelText);
+  label->SetTextSize(0.05); // Set the text size
+  label->SetTextAngle(0);
+  label->SetTextColor(kGray); // Set the text color to match the line
   label->Draw();
 }

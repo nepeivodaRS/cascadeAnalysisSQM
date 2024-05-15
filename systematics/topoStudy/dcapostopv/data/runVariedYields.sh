@@ -13,7 +13,9 @@ cut="dcapostopv"
 
 workingDir=\"${PWD}\"
 
-pathToDATA="\"/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/systematics/data/AnalysisResultsDataReduced.root\""
+pathToDATAfileList="/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/systematics/fileLists/input_data-AR.txt"
+# Read the first line of the file into a variable using head and command substitution
+pathToDATA=\"$(head -n 1 "$pathToDATAfileList")\"
 
 #default
 root -l -b -q "../../../../yield.C(2, 0, 0, 0,
@@ -23,7 +25,7 @@ root -l -b -q "../../../../yield.C(2, 0, 0, 0,
                \"_DEF\")"
 
 #systematics
-for i in {1..9}
+for i in {1..10}
 do
     root -l -b -q "../../../../yield.C(2, 0, 0, 0,
                    $pathToDATA,

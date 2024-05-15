@@ -14,7 +14,7 @@ o2-analysis-lf-cascpostprocessing -b --configuration json://config/configDEF.jso
 mv AnalysisResults.root $directory/DATA-LHC22o_apass6-DEF.root
 
 #systematics
-for i in {1..8}
+for i in {1..9}
 do
     o2-analysis-lf-cascpostprocessing -b  --configuration json://config/systjson$i.json
     mv AnalysisResults.root $directory/DATA-LHC22o_apass6-$i.root

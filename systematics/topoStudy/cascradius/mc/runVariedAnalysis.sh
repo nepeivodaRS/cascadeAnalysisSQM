@@ -14,7 +14,7 @@ o2-analysis-lf-cascpostprocessing -b --configuration json://config/configDEF.jso
 mv AnalysisResults.root results/MC-LHC24b1-DEF.root
 
 #systematics
-for i in {1..24}
+for i in {1..14}
 do
     o2-analysis-lf-cascpostprocessing -b  --configuration json://config/systjson$i.json
     mv AnalysisResults.root results/MC-LHC24b1-$i.root

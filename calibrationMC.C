@@ -1,10 +1,10 @@
 #include "help.h"
 #include "effHelp.h"
 
-void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/data/25apr_lhc24b1/AnalysisResults.root",
+void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/data/25apr_lhc24b1b/AnalysisResults.root",
                    const TString fileData = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/data/22apr_lhc22o_pass6_medium/AnalysisResults.root",
                    const TString outputDir = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM",
-                   const TString postFix = "_LHC24b1"){ // postfix to the output file
+                   const TString postFix = "_LHC24b1b"){ // postfix to the output file
   // Start of Code
   std::cout << "\x1B[1;33m"; // Set text color to yellow
   std::cout << "\n************ MC Calibration in Classes ************\n";
@@ -68,6 +68,92 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
   hProjPVContrFT0Mperc->GetYaxis()->SetTitle("FT0M Multiplicity percentile");
   hProjPVContrFT0Mperc->SetTitle("");
   hProjPVContrFT0Mperc->Write();
+
+  // Compare hFT0Msignal vs PVcontr in DATA and MC
+  TH3F* hFT0MsignalPVContrData = (TH3F*)fileDatain->Get("lf-cascqaanalysis/hFT0MsignalPVContr");
+  TH3F* hFT0MsignalPVContrDataClone = (TH3F*)hFT0MsignalPVContrData->Clone("hFT0MsignalPVContrDataClone");
+  hFT0MsignalPVContrDataClone->GetZaxis()->SetRange(2, 3); // INEL>0
+  TH2F* hProjPVContrFT0MsignalData = static_cast<TH2F*>(hFT0MsignalPVContrDataClone->Project3D("xy"));
+  hProjPVContrFT0MsignalData->GetXaxis()->SetRangeUser(0., nNtracksLimit); // Set Ntracks axis range
+
+  TH3F* hFT0MsignalPVContrMC = (TH3F*)fileMCin->Get("lf-cascqaanalysis/hFT0MsignalPVContr");
+  TH3F* hFT0MsignalPVContrMCClone = (TH3F*)hFT0MsignalPVContrMC->Clone("hFT0MsignalPVContrMCClone");
+  hFT0MsignalPVContrMCClone->GetZaxis()->SetRange(2, 3); // INEL>0
+  TH2F* hProjPVContrFT0MsignalMC = static_cast<TH2F*>(hFT0MsignalPVContrMCClone->Project3D("xy"));
+  hProjPVContrFT0MsignalMC->GetXaxis()->SetRangeUser(0., nNtracksLimit); // Set Ntracks axis range
+
+  TCanvas* canvas2D_PVcontrFT0Msignal = new TCanvas("canvas2D_PVcontrFT0Msignal", "canvas2D_PVcontrFT0Msignal", 1000,800);
+  canvas2D_PVcontrFT0Msignal->Divide(2, 2);
+  StyleCanvas(canvas2D_PVcontrFT0Msignal, 0.15, 0.05, 0.05, 0.15);
+  for (Int_t i = 1; i <= 4; i++) {
+    canvas2D_PVcontrFT0Msignal->cd(i)->SetMargin(0.16, 0.15, 0.11, 0.1);
+  }
+
+  TLegend *LegendFT0MsignalData = new TLegend(0.40, 0.64, 0.83, 0.84);
+  LegendFT0MsignalData->SetFillStyle(0);
+  LegendFT0MsignalData->SetTextAlign(33);
+  LegendFT0MsignalData->SetTextSize(0.04);
+  LegendFT0MsignalData->SetTextFont(42);
+  LegendFT0MsignalData->SetLineColorAlpha(0.,0.);
+  LegendFT0MsignalData->SetFillColorAlpha(0.,0.);
+  LegendFT0MsignalData->SetBorderSize(0.);
+  LegendFT0MsignalData->AddEntry("", "#bf{ALICE Work In Progress}", "");
+  LegendFT0MsignalData->AddEntry("", "pp, #sqrt{#it{s}} = 13.6 TeV", "");
+  LegendFT0MsignalData->AddEntry("", "LHC22o_pass6_small, INEL > 0", "");
+
+  canvas2D_PVcontrFT0Msignal->cd(1);
+  Style2DHisto(hProjPVContrFT0MsignalData, "#it{N}_{tracks}", "FT0M signal", "DATA", 0.05, 0.05, 0.05, 0.05, 0.05);
+  hProjPVContrFT0MsignalData->GetYaxis()->SetTitleOffset(1.7);
+  hProjPVContrFT0MsignalData->Draw("COLZ");
+  LegendFT0MsignalData->Draw("same");
+
+  TLegend *LegendFT0MsignalMC = new TLegend(0.40, 0.64, 0.83, 0.84);
+  LegendFT0MsignalMC->SetFillStyle(0);
+  LegendFT0MsignalMC->SetTextAlign(33);
+  LegendFT0MsignalMC->SetTextSize(0.04);
+  LegendFT0MsignalMC->SetTextFont(42);
+  LegendFT0MsignalMC->SetLineColorAlpha(0.,0.);
+  LegendFT0MsignalMC->SetFillColorAlpha(0.,0.);
+  LegendFT0MsignalMC->SetBorderSize(0.);
+  LegendFT0MsignalMC->AddEntry("", "LHC24b1b, rec. true INEL > 0", "");
+
+  canvas2D_PVcontrFT0Msignal->cd(2);
+  Style2DHisto(hProjPVContrFT0MsignalMC, "#it{N}_{tracks}", "FT0M signal", "MC", 0.05, 0.05, 0.05, 0.05, 0.05);
+  hProjPVContrFT0MsignalMC->GetYaxis()->SetTitleOffset(1.7);
+  hProjPVContrFT0MsignalMC->Draw("COLZ");
+  canvas2D_PVcontrFT0Msignal->Write();
+  LegendFT0MsignalMC->Draw();
+
+  canvas2D_PVcontrFT0Msignal->cd(3);
+  TH2F* hProjPVContrFT0MsignalDataZoomed = (TH2F*)hProjPVContrFT0MsignalData->Clone("hProjPVContrFT0MsignalDataZoomed");
+  Int_t nFT0MsignalZoomedLimit = 3000;
+  Int_t nNtracksZoomedLimit = 50;
+  hProjPVContrFT0MsignalDataZoomed->GetYaxis()->SetRangeUser(0., nFT0MsignalZoomedLimit); // Set FT0M raw signal axis range
+  hProjPVContrFT0MsignalDataZoomed->GetXaxis()->SetRangeUser(0., nNtracksZoomedLimit); // Set Ntracks axis range
+  hProjPVContrFT0MsignalDataZoomed->SetTitle("Zoomed DATA");
+  hProjPVContrFT0MsignalDataZoomed->Draw("COLZ");
+
+  canvas2D_PVcontrFT0Msignal->cd(4);
+  TH2F* hProjPVContrFT0MsignalMCZoomed = (TH2F*)hProjPVContrFT0MsignalMC->Clone("hProjPVContrFT0MsignalMCZoomed");
+  hProjPVContrFT0MsignalMCZoomed->GetYaxis()->SetRangeUser(0., nFT0MsignalZoomedLimit); // Set FT0M raw signal axis range
+  hProjPVContrFT0MsignalMCZoomed->GetXaxis()->SetRangeUser(0., nNtracksZoomedLimit); // Set Ntracks axis range
+  hProjPVContrFT0MsignalMCZoomed->SetTitle("Zoomed MC");
+  hProjPVContrFT0MsignalMCZoomed->Draw("COLZ");
+
+  // Calc. the fraction of BG events in DATA
+  Double_t nWeirdEventsData = 0;
+  Double_t nAllEventsData = 0;
+  for (Int_t binx = 1; binx <= hProjPVContrFT0MsignalData->GetNbinsX(); binx++) {
+    for (Int_t biny = 1; biny <= hProjPVContrFT0MsignalData->GetNbinsY(); biny++) {
+      Double_t binContent = hProjPVContrFT0MsignalData->GetBinContent(binx, biny);
+      nAllEventsData += binContent;
+      Double_t binValueY = hProjPVContrFT0MsignalData->GetYaxis()->GetBinCenter(biny);
+      if(binValueY > 9000){
+        nWeirdEventsData += binContent;
+      }
+    }
+  }
+  std::cout << "********* nWeirdEventsData (FT0M signal > 9k): " << nWeirdEventsData << " nAllEventsData: " <<  nAllEventsData << " Fraction of weird events in DATA: " << nWeirdEventsData/nAllEventsData << " *********\n";
 
   // Just for QC, check how mean of PV contributors depends on Ngen in FT0M //
   TH2F* hProjPVContrNchFT0MClone = (TH2F*)hProjPVContrNchFT0M->Clone("hProjPVContrNchFT0MClone");
@@ -376,7 +462,7 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
   }
   StyleHisto(hCalibFT0Mperc, 0, 1.2 * hCalibFT0Mperc->GetBinContent(hCalibFT0Mperc->GetMaximumBin()), 1, 1, "FT0M Multiplicity percentile", "Counts/Class Width", "", 0, 0, 0, 1.0, 1.25, 1, 0.04, 0.04);
 
-  TLegend *LegendCalibratedFT0M = new TLegend(0.071, 0.624, 0.501, 0.824);
+  TLegend *LegendCalibratedFT0M = new TLegend(0.13, 0.61, 0.56, 0.81);
   LegendCalibratedFT0M->SetFillStyle(0);
   LegendCalibratedFT0M->SetTextAlign(33);
   LegendCalibratedFT0M->SetTextSize(0.04);
@@ -386,7 +472,7 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
   LegendCalibratedFT0M->SetBorderSize(0.);
   LegendCalibratedFT0M->AddEntry("", "#bf{ALICE Work In Progress}", "");
   LegendCalibratedFT0M->AddEntry("", "pp, #sqrt{#it{s}} = 13.6 TeV", "");
-  LegendCalibratedFT0M->AddEntry("", "LHC24b1, INEL > 0", "");
+  LegendCalibratedFT0M->AddEntry("", "LHC24b1b, rec. true INEL > 0", "");
 
   hCalibFT0Mperc->Draw();
   LegendCalibratedFT0M->Draw("same");
@@ -528,7 +614,7 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
   legendTitleMC->SetFillColorAlpha(0.,0.);
   legendTitleMC->AddEntry("", "#bf{ALICE Work In Progress}", "");
   legendTitleMC->AddEntry("", "pp, #sqrt{#it{s}} = 13.6 TeV", "");
-  legendTitleMC->AddEntry("", "LHC24b1", "");
+  legendTitleMC->AddEntry("", "LHC24b1b, rec. true INEL > 0", "");
 
   TCanvas* canvasPVContrInClassesMC = new TCanvas("canvasPVContrInClassesMC", "canvasPVContrInClassesMC", 0, 70, 620, 850);
   StyleCanvas(canvasPVContrInClassesMC, 0.15, 0.05, 0.05, 0.15);
@@ -549,7 +635,7 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
     hDummyPVContrInClassesMC->SetBinContent(i, 1e-12);
   canvasPVContrInClassesMC->cd();
   padPVContrInClassesMCUp->cd();
-  StyleHistoMultiPlot(hDummyPVContrInClassesMC, 1e-11, 3, 1, 1, "#it{N}_{tracks}", "Normalized Counts", "", 0, 0, 0, 1.5, 1.0, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
+  StyleHistoMultiPlot(hDummyPVContrInClassesMC, 1e-11, 1e2, 1, 1, "#it{N}_{tracks}", "Normalized Counts", "", 0, 0, 0, 1.5, 1.0, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
   SetTickLength(hDummyPVContrInClassesMC, 0.025, 0.03);
   TAxis *axisPVContrInClassesMCDummy = hDummyPVContrInClassesMC->GetYaxis();
   axisPVContrInClassesMCDummy->ChangeLabel(1, -1, -1, -1, -1, -1, " ");
@@ -700,7 +786,7 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
   StyleHistoLight(hProjNchFT0MPVContrClone2);
   hProjNchFT0MPVContrClone2->Draw("SAME");
 
-  TLegend *LegendTitleMultRec = new TLegend(0.28, 0.25, 0.71, 0.45);
+  TLegend *LegendTitleMultRec = new TLegend(0.47, 0.25, 0.80, 0.45);
   LegendTitleMultRec->SetFillStyle(0);
   LegendTitleMultRec->SetTextAlign(33);
   LegendTitleMultRec->SetTextSize(0.04);
@@ -710,7 +796,7 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
   LegendTitleMultRec->SetBorderSize(0.);
   LegendTitleMultRec->AddEntry("", "#bf{ALICE}", "");
   LegendTitleMultRec->AddEntry("", "pp, #sqrt{#it{s}} = 13.6 TeV", "");
-  LegendTitleMultRec->AddEntry("", "LHC24b1, INEL > 0", "");
+  LegendTitleMultRec->AddEntry("", "LHC24b1b, rec. true INEL > 0", "");
   LegendTitleMultRec->Draw("same");
 
   TLegend *LegendTextMultRec = new TLegend(0.055, 0.634, 0.489, 0.850);
@@ -752,11 +838,11 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
   axis->SetLabelColor(kRed);
   axis->Draw("same");
 
-  DrawLine(NChFT0MCalib[numMult - 1], 1, "70 %");
-  DrawLine(NChFT0MCalib[5], 1, "30 %");
-  DrawLine(NChFT0MCalib[3], 1, "10 %");
-  DrawLine(NChFT0MCalib[2], 1, "5 %");
-  DrawLine(NChFT0MCalib[1], 1, "1 %");
+  DrawLine(NChFT0MCalib[numMult - 1], 1, Form("%.1f %s", multiplicityPerc[numMult - 1], "%"));
+  // DrawLine(NChFT0MCalib[5], 1, "30 %");
+  // DrawLine(NChFT0MCalib[3], 1, "10 %");
+  // DrawLine(NChFT0MCalib[2], 1, "5 %");
+  // DrawLine(NChFT0MCalib[1], 1, "1 %");
 
   canvasMultRec->Update();
   canvasMultRec->Write();

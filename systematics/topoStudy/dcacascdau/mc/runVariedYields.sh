@@ -13,7 +13,9 @@ cut="dcacascdau"
 
 workingDir=\"${PWD}\"
 
-pathToMC="\"/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/data/25apr_lhc24b1/AnalysisResults.root\""
+pathToMCfileList="/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/systematics/fileLists/input_mc-AR.txt"
+# Read the first line of the file into a variable using head and command substitution
+pathToMC=\"$(head -n 1 "$pathToMCfileList")\"
 
 #default
 root -l -b -q "../../../../yield.C(2, 0, 0, 1,
@@ -23,7 +25,7 @@ root -l -b -q "../../../../yield.C(2, 0, 0, 1,
                \"_DEF\")"
 
 #systematics
-for i in {1..9}
+for i in {1..20}
 do
     root -l -b -q "../../../../yield.C(2, 0, 0, 1,
                    $pathToMC,

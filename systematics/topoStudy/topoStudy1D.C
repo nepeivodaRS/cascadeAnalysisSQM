@@ -10,7 +10,8 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
                          Double_t yMin = 0.1,
                          Double_t yMax = 1.5,
                          Double_t yRatioMin = 0.96,
-                         Double_t yRatioMax = 1.04,    
+                         Double_t yRatioMax = 1.04,
+                         const bool isGeq = true, 
                          const std::string workingDir = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM/systematics/topoStudy/casccospa",
                          const std::string postFix = "_casccospa")
 {
@@ -183,9 +184,10 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   }
 
   // Find the loosest config in DATA
+  std::string sLoosestNumber = isGeq ? "1" : std::to_string(numFilesDATA - 1);
   std::vector<std::pair<Double_t, Int_t>> yieldLoosestDATA; // yield, bin number
   for (const auto& tuple : yieldDATA) {
-      if (std::get<1>(tuple) == "1") {
+      if (std::get<1>(tuple) == sLoosestNumber) {
         yieldLoosestDATA.push_back(std::make_pair(std::get<0>(tuple), std::get<2>(tuple)));
       }
   }
@@ -241,7 +243,7 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   // Find the loosest config in MC
   std::vector<std::pair<Double_t, Int_t>> yieldLoosestMC; // yield, bin number
   for (const auto& tuple : yieldMC) {
-      if (std::get<1>(tuple) == "1") {
+      if (std::get<1>(tuple) == sLoosestNumber) {
         yieldLoosestMC.push_back(std::make_pair(std::get<0>(tuple), std::get<2>(tuple)));
       }
   }
@@ -305,12 +307,23 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     }
 
     // Plot The Signal Loss Fraction and DATA/MC ratios //
-    TCanvas* canvasSignalLoss = new TCanvas("SignalLoss", "SignalLoss", 0, 70, 620, 850);
-    StyleCanvas(canvasSignalLoss, 0.15, 0.05, 0.05, 0.15);
+    TCanvas* canvasSignalLoss; 
+    Double_t xLegend;
+    Double_t padRightOffset;
+    if (xLabel == "#Delta#it{M}_{#Lambda}, GeV/#it{c}^{2}" || xLabel == "#Delta#it{M}_{#Omega}, GeV/#it{c}^{2}") {
+      canvasSignalLoss = new TCanvas("SignalLoss", "SignalLoss", 0, 70, 650, 850);
+      padRightOffset = 0.1;
+      xLegend = 0.503;
+    } else {
+      padRightOffset = 0.05;
+      xLegend = 0.609;
+      canvasSignalLoss = new TCanvas("SignalLoss", "SignalLoss", 0, 70, 620, 850);
+    }
     TPad *padSignalLossUp = new TPad("padSignalLossUp", "padSignalLossUp", 0, 0.36, 1, 1);
     TPad *padSignalLossLow = new TPad("padSignalLossLow", "padSignalLossLow", 0, 0, 1, 0.36);
-    StylePad(padSignalLossUp, 0.15, 0.05, 0.05, 0.);
-    StylePad(padSignalLossLow, 0.15, 0.05, 0.02, 0.2);
+    StylePad(padSignalLossUp, 0.15, padRightOffset, 0.05, 0.);
+    StylePad(padSignalLossLow, 0.15, padRightOffset, 0.02, 0.2);
+    StyleCanvas(canvasSignalLoss, 0.15, 0.05, 0.05, 0.15);
     canvasSignalLoss->cd();
     padSignalLossUp->Draw();
     padSignalLossLow->Draw();
@@ -319,12 +332,12 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     TH1F *hDummySignalLoss = new TH1F("hDummySignalLoss", "hDummySignalLoss", 10000, xAxisLimits[0], xAxisLimits[1]);
     // Up
     for (Int_t i = 1; i <= hDummySignalLoss->GetNbinsX(); i++)
-      hDummySignalLoss->SetBinContent(i, 0.);
+      hDummySignalLoss->SetBinContent(i, 10000);
     canvasSignalLoss->cd();
     padSignalLossUp->cd();
     hDummySignalLoss->GetYaxis()->SetMaxDigits(3);
     hDummySignalLoss->GetYaxis()->SetDecimals(kTRUE);
-    StyleHistoMultiPlot(hDummySignalLoss, yAxisLimitsUp[0], yAxisLimitsUp[1], 1, 1, "cos(PA)", "Signal(x)/Signal(loosest)", "", 0, 0, 0, 1.5, 1.2, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
+    StyleHistoMultiPlot(hDummySignalLoss, yAxisLimitsUp[0], yAxisLimitsUp[1], 1, 1, xLabel, "Signal(x)/Signal(loosest)", "", 0, 0, 0, 1.5, 1.2, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
     SetTickLength(hDummySignalLoss, 0.025, 0.03);
     TAxis *axisSignalLossDummy = hDummySignalLoss->GetYaxis();
     axisSignalLossDummy->ChangeLabel(1, -1, -1, -1, -1, -1, " ");
@@ -338,6 +351,8 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     padSignalLossLow->cd();
     StyleHistoMultiPlot(hDummySignalLossLow, yAxisLimitsLow[0], yAxisLimitsLow[1], 1, 1, xLabel, "DATA/MC", "", 0, 0, 0, 1.0, 0.9, 0, 0.08, 0.08, 0.08, 0.07, 0.01);
     SetTickLength(hDummySignalLossLow, 0.025, 0.03);
+    hDummySignalLossLow->GetXaxis()->SetMaxDigits(3);
+    hDummySignalLossLow->GetXaxis()->SetDecimals(kTRUE);
     TAxis *axisDummySignalLossLow = hDummySignalLossLow->GetYaxis();
     axisDummySignalLossLow->ChangeLabel(-1, -1, -1, -1, -1, -1, " "); // last 
     axisDummySignalLossLow->ChangeLabel(1, -1, -1, -1, -1, -1, " "); // first
@@ -354,7 +369,7 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     //legSignalLoss->SetTextAlign(13); // adjust text wrt markers
     StyleLegend(legSignalLoss, 0.0, 0.0);
 
-    TLegend *legendTitle = new TLegend(0.609, 0.693913, 0.908, 0.893);
+    TLegend *legendTitle = new TLegend(xLegend, 0.693913, 0.908, 0.893);
     StyleLegend(legendTitle, 0.0, 0.0);
     legendTitle->SetTextAlign(33);
     legendTitle->SetTextSize(0.05);
@@ -383,6 +398,9 @@ void topoStudy1D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
       StyleHistoMultiPlot(signaLossRatio[b - 1], 0., 10, colorPt[b - 1], MarkerMult[0], "", "", "", 0, 0, 0, 1.5, 1.0, SizeMult[0], 0.0, 0.05, 0.0, 0.035, 0.005);
       signaLossRatio[b - 1]->Draw("same p");
     }
+
+    DrawHorLineSyst(xAxisLimits[0], xAxisLimits[1], 1.02 , "2%");
+    DrawHorLineSyst(xAxisLimits[0], xAxisLimits[1], 0.98 , "2%");
 
     padSignalLossUp->cd();
     legSignalLoss->Draw("same");

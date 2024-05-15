@@ -17,6 +17,21 @@ Double_t fparab(Double_t *x, Double_t *par)
   return par[0] + par[1] * x[0] + par[2] * x[0] * x[0];
 }
 
+Double_t fpol1(Double_t *x, Double_t *par)
+{
+  const Int_t numPart = 2;
+  // Signal region for the BG estimation
+  Double_t liminf[numPart] = {1.308, 1.665};
+  Double_t limsup[numPart] = {1.332, 1.677};
+  Int_t part = par[2];
+  if (reject && x[0] > liminf[part] && x[0] < limsup[part])
+  {
+    TF1::RejectPoint();
+    return 0;
+  }
+  return par[0] + par[1] * x[0];
+}
+
 void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
            const Int_t nMultInterval = 0, // 0 : MB, 1-9 - multiplicity intervals
            const Int_t inel = 0, // inel > N (0/1)
@@ -88,7 +103,7 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   dirBaseHists->cd();
   TCanvas *canvasNEvents = new TCanvas("canvasNEvents","canvasNEvents", 800, 600);
   canvasNEvents->cd();
-  hNEvents->GetXaxis()->SetRange(1,9);
+  hNEvents->GetXaxis()->SetRange(1,11);
   hNEvents->SetTitle("");
   hNEvents->Draw("HIST TEXT0");
   //StyleHistoLight(hNEvents);
@@ -97,7 +112,7 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   long int nEvents = 0;
   // Counts in multiplicity percentile
   if(isMC) {
-    nEvents = hNEvents->GetBinContent(8 + inel); // get total number of INEL > N events
+    nEvents = hNEvents->GetBinContent(10 + inel); // get total number of INEL > N events
 
     // hNEventsMC histogram (event selection statistics for gen. MC)
     dirBaseHists->cd();
@@ -335,14 +350,14 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
 
   TCanvas *canvasInvMass[numPtBins];
   TF1 *total[numPtBins];
-  TF1 *bkgparab[numPtBins]; // bg function without signal region
+  TF1 *bkgfunc[numPtBins]; // bg function without signal region
   TF1 *signalFirstDraw[numPtBins]; // bg function in full range
   TF1 *signalSecondDraw[numPtBins]; // bg function in full range
-  TF1 *bkgparabDraw[numPtBins]; // bg function in full range
+  TF1 *bkgfuncDraw[numPtBins]; // bg function in full range
   // fFitResultTotal is used for cov matrix
   TFitResultPtr fFitResultTotal[numPtBins];
-  // fFitResultParab is used for bg integral error
-  TFitResultPtr fFitResultParab[numPtBins];
+  // fFitResultBKG is used for bg integral error
+  TFitResultPtr fFitResultBKG[numPtBins];
   
   // Create mean, sigma and yield hsitograms
   TH1F *hMeans = new TH1F("Mean_" + particleNames[nParticle], "Mean_" + particleNames[nParticle], numPtBins, binpt);
@@ -382,6 +397,8 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
 
   Int_t nSigma = 6;
 
+  Int_t fitFunc = 2; // 1 - pol1, 2 - pol2
+
   for (Int_t iPt = 0; iPt < numPtBins; iPt++) {
     hInvMass2Dpt[iPt] = (TH2F*)hInvMass2D->Clone(Form("2DHistInPtBin_%d", iPt));
     Int_t lowPtBin = hInvMass2Dpt[iPt]->GetYaxis()->FindBin(binpt[iPt] + 1e-6);
@@ -401,13 +418,28 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     canvasInvMass[iPt] = new TCanvas(Form("%s_%d", hInvMass3D->GetName(), iPt), Form("%s_%d", hInvMass3D->GetName(), iPt), 1000, 800);
     StyleCanvas(canvasInvMass[iPt], 0.14, 0.05, 0.11, 0.15);
     canvasInvMass[iPt]->cd();
-    bkgparab[iPt] = new TF1(Form("parab_%d", iPt), fparab, minRange[partType], maxRange[partType], 4);
-    bkgparab[iPt]->SetLineColor(kGreen);
-    bkgparab[iPt]->FixParameter(3, partType); // Fix Particle type to reject signal range
-    fFitResultParab[iPt] = hInvMass1Dpt[iPt]->Fit(bkgparab[iPt], "SRQL0");
-    Double_t parBG[4];
-    bkgparab[iPt]->GetParameters(parBG);
-    total[iPt] = new TF1(Form("total_%d", iPt), "gaus(0) + gaus(3) + pol2(6)", minRange[partType], maxRange[partType]);
+
+    if (fitFunc == 1) {
+      bkgfunc[iPt] = new TF1(Form("pol1_%d", iPt), fpol1, minRange[partType], maxRange[partType], 3);
+      bkgfunc[iPt]->FixParameter(2, partType); // Fix Particle type to reject signal range
+    } else if (fitFunc == 2) {
+      bkgfunc[iPt] = new TF1(Form("parab_%d", iPt), fparab, minRange[partType], maxRange[partType], 4);
+      bkgfunc[iPt]->FixParameter(3, partType); // Fix Particle type to reject signal range
+    }
+
+    bkgfunc[iPt]->SetLineColor(kGreen);
+
+    fFitResultBKG[iPt] = hInvMass1Dpt[iPt]->Fit(bkgfunc[iPt], "SRQL0");
+    Double_t parBG[4]; // maximum number of parameters is 4
+    bkgfunc[iPt]->GetParameters(parBG);
+    if (fitFunc == 1) {
+      total[iPt] = new TF1(Form("total_%d", iPt), "gaus(0) + gaus(3) + pol1(6)", minRange[partType], maxRange[partType]);
+    } else if (fitFunc == 2) {
+      total[iPt] = new TF1(Form("total_%d", iPt), "gaus(0) + gaus(3) + pol2(6)", minRange[partType], maxRange[partType]);
+    }
+
+    Double_t peakValue = hInvMass1Dpt[iPt]->GetBinContent(hInvMass1Dpt[iPt]->GetMaximumBin());
+    hInvMass1Dpt[iPt]->GetYaxis()->SetRangeUser(0, 1.1 * peakValue);
     total[iPt]->SetLineColor(kRed);
     total[iPt]->SetParName(0, "norm");
     total[iPt]->SetParName(1, "mean");
@@ -417,9 +449,9 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     total[iPt]->SetParName(5, "sigma2");
     total[iPt]->SetParName(6, "p0");
     total[iPt]->SetParName(7, "p1");
-    total[iPt]->SetParName(8, "p2");
-    Double_t peakValue = hInvMass1Dpt[iPt]->GetBinContent(hInvMass1Dpt[iPt]->GetMaximumBin());
-    hInvMass1Dpt[iPt]->GetYaxis()->SetRangeUser(0, 1.1 * peakValue);
+    if (fitFunc == 2) {
+      total[iPt]->SetParName(8, "p2");
+    }
     total[iPt]->SetParameters(peakValue, pdgMass[partType], 0.001, peakValue, pdgMass[partType], 0.001);
     total[iPt]->SetParLimits(0, 0., 1.2 * peakValue);
     total[iPt]->SetParLimits(1, minRangeSignal[partType], maxRangeSignal[partType]);
@@ -430,21 +462,32 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     //total[iPt]->FixParameter(6, 1.05*parBG[0]); // better reconstruction for MC
     total[iPt]->FixParameter(6, parBG[0]);
     total[iPt]->FixParameter(7, parBG[1]);
-    total[iPt]->FixParameter(8, parBG[2]);
+
+    if (fitFunc == 2) {
+      total[iPt]->FixParameter(8, parBG[2]);
+    }
+
+
     total[iPt]->SetNpx(1e4);
     total[iPt]->SetLineWidth(3);
     fFitResultTotal[iPt] = hInvMass1Dpt[iPt]->Fit(total[iPt], "SRQBL");
-    Double_t parFinal[9];
+    Double_t parFinal[fitFunc + 7]; // maximum number of parameters is 9
     total[iPt]->GetParameters(parFinal);
 
-    bkgparabDraw[iPt] = new TF1(Form("parabToDraw_%d", iPt), "pol2", minRange[partType], maxRange[partType]);
-    bkgparabDraw[iPt]->FixParameter(0, parFinal[6]);
-    bkgparabDraw[iPt]->FixParameter(1, parFinal[7]);
-    bkgparabDraw[iPt]->FixParameter(2, parFinal[8]);
-    bkgparabDraw[iPt]->SetLineStyle(2);
-    bkgparabDraw[iPt]->SetNpx(1e4);
-    bkgparabDraw[iPt]->SetLineWidth(3);
-    bkgparabDraw[iPt]->SetLineColor(kCyan+2); //{kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2};
+    if (fitFunc == 1) {
+      bkgfuncDraw[iPt] = new TF1(Form("pol1ToDraw_%d", iPt), "pol1", minRange[partType], maxRange[partType]);
+    } else if (fitFunc == 2) {
+      bkgfuncDraw[iPt] = new TF1(Form("parabToDraw_%d", iPt), "pol2", minRange[partType], maxRange[partType]);
+      bkgfuncDraw[iPt]->FixParameter(2, parFinal[8]);
+    }
+    
+    bkgfuncDraw[iPt]->FixParameter(0, parFinal[6]);
+    bkgfuncDraw[iPt]->FixParameter(1, parFinal[7]);
+    
+    bkgfuncDraw[iPt]->SetLineStyle(2);
+    bkgfuncDraw[iPt]->SetNpx(1e4);
+    bkgfuncDraw[iPt]->SetLineWidth(3);
+    bkgfuncDraw[iPt]->SetLineColor(kCyan+2); //{kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2};
 
     signalFirstDraw[iPt] = new TF1(Form("signalToDraw1_%d", iPt), "gaus", minRange[partType], maxRange[partType]);
     signalFirstDraw[iPt]->FixParameter(0, total[iPt]->GetParameter(0));
@@ -474,7 +517,6 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     Double_t sigma1a = total[iPt]->GetParameter(2);  // sigma1
     Double_t sigma2a = total[iPt]->GetParameter(5);  // sigma2
     TMatrixD cova = fFitResultTotal[iPt]->GetCovarianceMatrix();
-
     Double_t mu_wa = (N1a*mu1a + N2a*mu2a)/(N1a+N2a);
     Double_t sigma_wa = (N1a*sigma1a + N2a*sigma2a)/(N1a+N2a);
 
@@ -527,7 +569,7 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     canvasInvMass[iPt]->Update();
     outputfile->cd();
     dirInvMassHists->cd();
-    bkgparabDraw[iPt]->Draw("same");
+    bkgfuncDraw[iPt]->Draw("same");
     canvasInvMass[iPt]->Write();
     delete canvasInvMass[iPt];
 
@@ -544,7 +586,7 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     DrawVertLine(rightEdgeSignal, yaxisMin, peakValue, kBlack);
     DrawVertLine(minRange[partType], yaxisMin, peakValue, kMagenta+1);
     DrawVertLine(maxRange[partType], yaxisMin, peakValue, kMagenta+1);
-    bkgparabDraw[iPt]->Draw("same");
+    bkgfuncDraw[iPt]->Draw("same");
     signalFirstDraw[iPt]->Draw("same");
     signalSecondDraw[iPt]->Draw("same");
 
@@ -554,8 +596,8 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hSigmas->SetBinContent(iPt + 1, sigma[iPt]);
     hSigmas->SetBinError(iPt + 1, errSigma[iPt]);
 
-    yieldBG[iPt] = bkgparabDraw[iPt]->Integral(leftEdgeSignal, rightEdgeSignal)/hInvMass1Dpt[iPt]->GetBinWidth(2);
-    errYieldBG[iPt] = bkgparabDraw[iPt]->IntegralError(leftEdgeSignal, rightEdgeSignal, fFitResultParab[iPt]->GetParams(), (fFitResultParab[iPt]->GetCovarianceMatrix()).GetMatrixArray());
+    yieldBG[iPt] = bkgfuncDraw[iPt]->Integral(leftEdgeSignal, rightEdgeSignal)/hInvMass1Dpt[iPt]->GetBinWidth(2);
+    errYieldBG[iPt] = bkgfuncDraw[iPt]->IntegralError(leftEdgeSignal, rightEdgeSignal, fFitResultBKG[iPt]->GetParams(), (fFitResultBKG[iPt]->GetCovarianceMatrix()).GetMatrixArray());
 
     yieldWithBG[iPt] = 0;
     for (Int_t bin = leftSignalBin; bin <= rightSignalBin; bin++) {
@@ -626,7 +668,7 @@ void yield(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
       hProjPtCascadeBGSumCloneInPtBins[iPt]->GetXaxis()->SetTitle(titleInvMass[nParticle] + " " + sInvMass);
       StyleHistoLight(hProjPtCascadeBGSumCloneInPtBins[iPt]);
       hProjPtCascadeBGSumCloneInPtBins[iPt]->Draw();
-      bkgparabDraw[iPt]->Draw("same");
+      bkgfuncDraw[iPt]->Draw("same");
     }
   }
 
