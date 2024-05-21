@@ -460,7 +460,7 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
     //std::cout << "width: " << classWidth << std::endl;
     hCalibFT0Mperc->SetBinContent(bin, hProjNchFT0MGen->GetBinContent(bin)/classWidth);
   }
-  StyleHisto(hCalibFT0Mperc, 0, 1.2 * hCalibFT0Mperc->GetBinContent(hCalibFT0Mperc->GetMaximumBin()), 1, 1, "FT0M Multiplicity percentile", "Counts/Class Width", "", 0, 0, 0, 1.0, 1.25, 1, 0.04, 0.04);
+  StyleHisto(hCalibFT0Mperc, 0, 1.2 * hCalibFT0Mperc->GetBinContent(hCalibFT0Mperc->GetMaximumBin()), 1, 1, "FT0M Multiplicity percentile", "Events/Class Width", "", 0, 0, 0, 1.0, 1.25, 1, 0.04, 0.04);
 
   TLegend *LegendCalibratedFT0M = new TLegend(0.13, 0.61, 0.56, 0.81);
   LegendCalibratedFT0M->SetFillStyle(0);
@@ -506,7 +506,7 @@ void calibrationMC(const TString fileMC = "/Users/rnepeiv/workLund/PhD_work/run3
   legendTitleData->SetFillColorAlpha(0.,0.);
   legendTitleData->AddEntry("", "#bf{ALICE Work In Progress}", "");
   legendTitleData->AddEntry("", "pp, #sqrt{#it{s}} = 13.6 TeV", "");
-  legendTitleData->AddEntry("", "LHC22o_pass6_medium", "");
+  legendTitleData->AddEntry("", "LHC22o_pass6_small", "");
 
   TCanvas* canvasPVContrInClassesData = new TCanvas("canvasPVContrInClassesData", "canvasPVContrInClassesData", 0, 70, 620, 850);
   StyleCanvas(canvasPVContrInClassesData, 0.15, 0.05, 0.05, 0.15);

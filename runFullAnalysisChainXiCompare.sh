@@ -15,27 +15,28 @@ pathToEfficiency="\"${PWD}/efficiencies/efficiency_XiPm_LHC24b1b_run2.root\""
 
 pathToMBYield="\"${PWD}/yieldsOutEffCorr/yield_XiPm_MB_inel0_run2.root\""
 
-# for i in `seq 0 10`
-#   do
-#     root -l -b -q "yield.C(2, $i, 0, 0,
-#                    $pathToDATA,
-#                    $pathToDATAPP,
-#                    $workingDir,
-#                    \"_run2\")"
-#   done
+for i in `seq 0 10`
+  do
+    root -l -b -q "yield.C(2, $i, 0, 0,
+                   $pathToDATA,
+                   $pathToDATAPP,
+                   $workingDir,
+                   \"_run2\")"
+  done
 
-# root -l "calibrationMC.C(
-#                 $pathToMC,
-#                 $pathToDATA,
-#                 $workingDir,
-#                 \"_LHC24b1b\")"
+root -l "calibrationMC.C(
+                $pathToMC,
+                $pathToDATA,
+                $workingDir,
+                \"_LHC24b1b\")"
 
-# root -l "effCorr.C(2, 0,
-#                 $pathToMC,
-#                 $pathToMCPP,
-#                 $pathToEfficiencyCalib,
-#                 $workingDir,
-#                 \"_run2\",
-#                 \"_LHC24b1b_run2\")"
+root -l "effCorr.C(2, 0,
+                $pathToMC,
+                $pathToMCPP,
+                $pathToEfficiencyCalib,
+                $workingDir,
+                \"_run2\",
+                \"_LHC24b1b_run2\")"
+
 root -l "compPublXiMB.C(2, 0, $workingDir, \"_run2\")"
 # root -l "purityInMult.C(2, 0, $workingDir, \"_run2\")"

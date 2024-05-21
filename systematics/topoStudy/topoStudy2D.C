@@ -383,7 +383,7 @@ void topoStudy2D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   canvas2D->Divide(2, 2);
   StyleCanvas(canvas2D, 0.15, 0.05, 0.05, 0.15);
   for (Int_t i = 1; i <= 4; i++) {
-    canvas2D->cd(i)->SetMargin(0.18, 0.14, 0.11, 0.1);
+    canvas2D->cd(i)->SetMargin(0.18, 0.15, 0.11, 0.1);
   }
 
   canvas2D->cd(1);
@@ -435,7 +435,7 @@ void topoStudy2D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     TCanvas* testcanvas = new TCanvas("test", "test", 800, 600);
     testcanvas->cd();
     TF1 *fitExp = new TF1("fitExp", "[0]*exp([1]*x-[2]) + [3]", 0.97, 0.999);
-    fitExp->SetParameters(-1.5, 0.9, 0.5, 64);
+    fitExp->SetParameters(-1.5, 0.9, 0.5, 63);
     signaLossRatioInt2PercXaxis->Fit(fitExp, "QR");
     Double_t fitPars[4];
     fitExp->GetParameters(fitPars);
@@ -446,7 +446,7 @@ void topoStudy2D(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     gROOT->SetBatch(kFALSE);
     canvas2D->cd(4);
     fitExp->Draw("same");
-    TLatex *label = new TLatex(cutMin1 + (cutMax1 - cutMin1)/20., cutMin2 + (cutMax2 - cutMin2)/1.3, Form("y = %.1e*exp(%.1f*x-%.1f) + %.1f", fitPars[0], fitPars[1], fitPars[2], fitPars[3]));
+    TLatex *label = new TLatex(cutMin1 + (cutMax1 - cutMin1)/20., cutMin2 + (cutMax2 - cutMin2)/1.2, Form("y = %.1e*exp(%.1f*x-%.1f) + %.1f", fitPars[0], fitPars[1], fitPars[2], fitPars[3]));
     label->SetTextSize(0.05); // Set the text size
     label->SetTextAngle(0);
     label->SetTextColor(kBlack); // Set the text color to match the line

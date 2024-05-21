@@ -187,7 +187,7 @@ void sigmaInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     legSigma->AddEntry(hSigma[iFile], SmoltBis[iFile], "pef");
     hSigma[iFile]->Draw("same ex0");
     hSigma[iFile]->SetFillStyle(0);
-    hSigma[iFile]->Draw("same e2");
+    //hSigma[iFile]->Draw("same e2");
 
     // Low
     padSigmaLow->cd();
@@ -195,7 +195,7 @@ void sigmaInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     if (iFile != 0) {
       hSigmaRatio[iFile]->Draw("same ex0");
       hSigmaRatio[iFile]->SetFillStyle(0);
-      hSigmaRatio[iFile]->Draw("same e2");
+      //hSigmaRatio[iFile]->Draw("same e2");
     }
   }
 

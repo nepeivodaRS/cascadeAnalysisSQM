@@ -4,7 +4,7 @@
 
 void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
                        const Int_t inel = 0, // inel > N (0/1)
-                       const Int_t typefit = 3, // mT scaling, Boltzmann, Fermi-Dir, Levi, Bose-Einstein
+                       const Int_t typefit = 3, // 0 - mT scaling, 1 - Boltzmann, 2 - Fermi-Dir, 3 - Levi, 4 - Bose-Einstein
                        const TString workingDir = "/Users/rnepeiv/workLund/PhD_work/run3omega/cascadeAnalysisSQM",
                        const TString postFix = "")
 {
@@ -40,6 +40,7 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     }
   }
 
+  // Run 3 systematics
   TString fileInPathSyst = workingDir + "/systematics/sourcesOfSyst/totalSystematics.root";
   TFile* fileSystin = TFile::Open(fileInPathSyst);
   if (!fileSystin || fileSystin->IsZombie()) {
@@ -48,7 +49,7 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   }
   TH1F* hSystUncert = (TH1F *)fileSystin->Get("hSystTotal");
 
-  // HEP Data File 
+  // HEP Data File (MB integrated yield)
   TString inputHEPDataPath = workingDir + "/data/published/integrated-xi.root";
   TFile* fileHEPDataIn = TFile::Open(inputHEPDataPath);
   if (!fileHEPDataIn || fileHEPDataIn->IsZombie()) {
@@ -84,6 +85,46 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hHEPYieldSyst->SetBinError(iBin, e2); // only syst. uncert.
   }
 
+  // HEP Data File (integrated yield in V0M classes)
+  TString inputHEPDataInClassesPath = workingDir + "/data/published/integratedInClasses-xi.root";
+  TFile* fileHEPDataInClassesIn = TFile::Open(inputHEPDataInClassesPath);
+  if (!fileHEPDataInClassesIn || fileHEPDataInClassesIn->IsZombie()) {
+      std::cerr << "Error opening HEP data file (integrated in classes)!" << std::endl;
+      return;
+  }
+  
+  TDirectory* yieldHEP2Dir = fileHEPDataInClassesIn->GetDirectory("Table 8c");
+  if (!yieldHEP2Dir)
+  {
+    std::cerr << "`Table 8c` directory in HEP data file is not found!" << std::endl;
+    return;
+  }
+
+  TH1F* hHEPYieldInClasses = (TH1F *)yieldHEP2Dir->Get("Hist1D_y3");
+  TH1F* hHEPYieldInClassese1 = (TH1F *)yieldHEP2Dir->Get("Hist1D_y3_e1");
+  TH1F* hHEPYieldInClassese2 = (TH1F *)yieldHEP2Dir->Get("Hist1D_y3_e2");
+  TH1F* hHEPYieldInClassese3 = (TH1F *)yieldHEP2Dir->Get("Hist1D_y3_e3");
+
+  // HEP Data File (integrated yield in tracklet classes )
+  TString inputHEPDataInTrackletClassesPath = workingDir + "/data/published/integratedInClassesTracklets-xi.root";
+  TFile* fileHEPDataInTrackletClassesIn = TFile::Open(inputHEPDataInTrackletClassesPath);
+  if (!fileHEPDataInTrackletClassesIn || fileHEPDataInTrackletClassesIn->IsZombie()) {
+      std::cerr << "Error opening HEP data file (integrated in classes)!" << std::endl;
+      return;
+  }
+  
+  TDirectory* yieldHEP3Dir = fileHEPDataInTrackletClassesIn->GetDirectory("Table 8a");
+  if (!yieldHEP3Dir)
+  {
+    std::cerr << "`Table 8c` directory in HEP data file is not found!" << std::endl;
+    return;
+  }
+
+  TH1F* hHEPYieldInTrackletClasses = (TH1F *)yieldHEP3Dir->Get("Hist1D_y3");
+  TH1F* hHEPYieldInTrackletClassese1 = (TH1F *)yieldHEP3Dir->Get("Hist1D_y3_e1");
+  TH1F* hHEPYieldInTrackletClassese2 = (TH1F *)yieldHEP3Dir->Get("Hist1D_y3_e2");
+  TH1F* hHEPYieldInTrackletClassese3 = (TH1F *)yieldHEP3Dir->Get("Hist1D_y3_e3");
+
   TH1F* hYield[numMult + 1];
   TH1F* hYieldSyst[numMult + 1];
   TH1F* hYieldTotal[numMult + 1];
@@ -105,7 +146,7 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hYield[iFile] = (TH1F *)yieldDir[iFile]->Get("Yield_" + particleNames[nParticle]);
     // Syst. histo
     hYieldSyst[iFile] = (TH1F*)hYield[iFile]->Clone(Form("YieldSys_%i_",iFile) + particleNames[nParticle]);
-    hYieldTotal[iFile] = (TH1F*)hYield[iFile]->Clone(Form("YieldSys_%i_",iFile) + particleNames[nParticle]); 
+    hYieldTotal[iFile] = (TH1F*)hYield[iFile]->Clone(Form("YieldTotal_%i_",iFile) + particleNames[nParticle]); // eff. corrected yield with total uncertainty -> to be used for fitting
     for (Int_t bin = 1; bin <= hYield[iFile]->GetNbinsX(); bin++) {
       hYieldSyst[iFile]->SetBinError(bin, hSystUncert->GetBinContent(bin)*hYield[iFile]->GetBinContent(bin));
       hYieldTotal[iFile]->SetBinError(bin, sqrt(pow(hYield[iFile]->GetBinError(bin),2) + pow(hYieldSyst[iFile]->GetBinError(bin),2)));
@@ -115,9 +156,9 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     // Syst. histo
     hYieldsRatioSyst[iFile] = (TH1F *)hYieldSyst[iFile]->Clone(Form("YieldCloneSyst_%i_", iFile) + particleNames[nParticle]);
     if (iFile == 0) {
-      hYieldsDenom = (TH1F *)hYield[iFile]->Clone("YieldCloneForDenom_" + particleNames[nParticle]);
+      hYieldsDenom = (TH1F *)hYield[0]->Clone("YieldCloneForDenom_" + particleNames[nParticle]);
       // Syst. histo
-      hYieldsDenomSyst = (TH1F *)hYieldSyst[iFile]->Clone("YieldCloneForDenomSyst_" + particleNames[nParticle]);
+      hYieldsDenomSyst = (TH1F *)hYieldSyst[0]->Clone("YieldCloneForDenomSyst_" + particleNames[nParticle]);
     }
 
     hYieldsRatio[iFile]->Divide(hYieldsDenom);
@@ -204,11 +245,14 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hDummy->SetBinContent(i, 1e-12);
   canvasYield->cd();
   padYieldUp->cd();
+  padYieldUp->SetLogy();
   StyleHistoMultiPlot(hDummy, yieldYLow[partType], yieldYUp[partType], 1, 1, "#it{p}_{T} (GeV/#it{c})", sdNdPtdY, "", 0, 0, 0, 1.5, 1.0, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
   SetTickLength(hDummy, 0.025, 0.03);
   TAxis *axisYieldDummy = hDummy->GetYaxis();
   axisYieldDummy->ChangeLabel(1, -1, -1, -1, -1, -1, " ");
   hDummy->GetXaxis()->SetRangeUser(0, hYield[0]->GetXaxis()->GetBinUpEdge(hYield[0]->GetNbinsX()) + 0.5);
+  hDummy->GetYaxis()->SetMaxDigits(4);
+  hDummy->GetYaxis()->SetDecimals(kTRUE);
   hDummy->Draw("same");
   // Low
   TH1F *hDummyLow = new TH1F("hDummyLow", "hDummyLow", 10000, 0, 8.5);
@@ -247,7 +291,7 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
 
   // Fit limits
   Double_t fitLow[numFitFuncs] = {0.6, 0.6, 0.6, 0.6, 0.6, 0.6};
-  Double_t fitUp[numFitFuncs] = {2.5, 2.5, 2.2, 4.0, 2.5, 2.5};
+  Double_t fitUp[numFitFuncs] = {2.5, 2.5, 2.2, 8.0, 2.5, 2.5};
 
   gROOT->SetBatch(kFALSE);
   // Plotting
@@ -255,8 +299,6 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     // Up
     StyleHistoMultiPlot(hYield[iFile], yieldYLow[partType], yieldYUp[partType], color[iFile], MarkerMult[iFile], "", hYield[iFile]->GetYaxis()->GetTitle(), "", 0, 0, 0, 1.5, 1.0, SizeMult[iFile], 0.0, 0.05, 0.0, 0.035, 0.005);
     StyleHistoMultiPlot(hYieldSyst[iFile], yieldYLow[partType], yieldYUp[partType], color[iFile], MarkerMult[iFile], "", hYield[iFile]->GetYaxis()->GetTitle(), "", 0, 0, 0, 1.5, 1.0, SizeMult[iFile], 0.0, 0.05, 0.0, 0.035, 0.005);
-    hYield[iFile]->GetYaxis()->SetMaxDigits(4);
-    hYield[iFile]->GetYaxis()->SetDecimals(kTRUE);
     legYield->AddEntry(hYield[iFile], SmoltBis[iFile], "pef");
 
     // Fitting
@@ -271,7 +313,7 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   
     // Save Yield histogram to make to-fit ratio after fitting
     hFitsRatio[iFile] = (TH1F *)hYield[iFile]->Clone(Form("hFitsRatio_m%i_typefit%i", iFile, typefit));
-    // Save Yield histogram to pass it then to YieldMean function
+    // Save not scaled yield histogram to pass it then to YieldMean function
     hYieldForStats[iFile] = (TH1F *)hYield[iFile]->Clone(Form("hYieldForStats_m%i_fit%i", iFile, typefit));
     hYieldForStatsSyst[iFile] = (TH1F *)hYieldSyst[iFile]->Clone(Form("hYieldForStatsSyst_m%i_fit%i", iFile, typefit));
     // Setup fit function
@@ -329,41 +371,38 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     std::cout << "chi/ndf: " << chi2NDF[iFile] << std::endl;
 
     // Scaling
-    fitFunctionScaled[iFile] = (TF1 *)fitFunction[iFile]->Clone(namepwgfunc[iFile] + "_Scaled");
+    fitFunctionScaled[iFile] = (TF1 *)fitFunction[iFile]->Clone(namepwgfunc[iFile] + Form("_Scaled_m%i", iFile));
     fitFunctionScaled[iFile]->SetLineColor(color[iFile]);
     fitFunctionScaled[iFile]->SetLineWidth(2);
     fitFunctionScaled[iFile]->SetLineStyle(7);
     fitFunctionScaled[iFile]->SetRange(0., fitUp[typefit]); // Display range
-    if (iFile == 0) {
+    if (iFile == 0) { // MB
       hYield[0]->Scale(ScaleFactorMB);
       hYieldSyst[0]->Scale(ScaleFactorMB);
-      fitFunctionScaled[0]->SetParameter(0, fitFunction[0]->GetParameter(0) * ScaleFactorMB);
-    } else {
+      fitFunctionScaled[0]->SetParameter(0, fitFunction[0]->GetParameter(0) * ScaleFactorMB); // make sure param #0 is just normalization!
+    } else { // in classes
       hYield[iFile]->Scale(ScaleFactor[iFile-1]);
       hYieldSyst[iFile]->Scale(ScaleFactor[iFile-1]);
-      fitFunctionScaled[iFile]->SetParameter(0, fitFunction[iFile]->GetParameter(0) * ScaleFactor[iFile-1]);
+      fitFunctionScaled[iFile]->SetParameter(0, fitFunction[iFile]->GetParameter(0) * ScaleFactor[iFile-1]); // make sure param #0 is just normalization!
     }
 
-    hYield[iFile]->SetFillStyle(0);
     padYieldUp->cd();
     hYield[iFile]->Draw("same ex0");
     hYieldSyst[iFile]->SetFillStyle(0);
     hYieldSyst[iFile]->Draw("same e2");
     fitFunctionScaled[iFile]->Draw("same");
-    padYieldUp->SetLogy();
 
     // Low
     // data yield/fit yield (ratio of integrated yield bin by bin)
     for (Int_t b = 1; b <= hFitsRatio[iFile]->GetNbinsX(); b++)
     {
       Double_t integralFit = fitFunction[iFile]->Integral(hFitsRatio[iFile]->GetXaxis()->GetBinLowEdge(b), hFitsRatio[iFile]->GetXaxis()->GetBinUpEdge(b));
-      Double_t errorYield = sqrt(pow(hYield[iFile]->GetBinError(b), 2) + pow(hYieldSyst[iFile]->GetBinError(b), 2)) / hYield[iFile]->GetBinContent(b); // stat. + syst.
+      Double_t errorYield = hYieldTotal[iFile]->GetBinError(b) / hYieldTotal[iFile]->GetBinContent(b); // stat. + syst.
       Double_t errorFit = fitFunction[iFile]->IntegralError(hFitsRatio[iFile]->GetXaxis()->GetBinLowEdge(b), hFitsRatio[iFile]->GetXaxis()->GetBinUpEdge(b)) / integralFit;
-      hFitsRatio[iFile]->SetBinContent(b, hFitsRatio[iFile]->GetBinContent(b) * hFitsRatio[iFile]->GetBinWidth(b) / integralFit);
+      hFitsRatio[iFile]->SetBinContent(b, hYieldTotal[iFile]->GetBinContent(b) * hYieldTotal[iFile]->GetBinWidth(b) / integralFit);
       hFitsRatio[iFile]->SetBinError(b, sqrt(pow(errorYield, 2) + pow(errorFit, 2))*hFitsRatio[iFile]->GetBinContent(b));
     }
     StyleHistoMultiPlot(hFitsRatio[iFile], 0.1 , 1.9, color[iFile], MarkerMult[iFile], "#it{p}_{T} (GeV/#it{c})", "Ratio to 0-100%", "", 0, 0, 0, 1.0, 0.7, SizeMult[iFile], 0.08, 0.08, 0.08, 0.08, 0.005);
-    hFitsRatio[iFile]->SetFillStyle(0);
     padYieldLow->cd();
     hFitsRatio[iFile]->Draw("same e0x0");
   }
@@ -489,9 +528,9 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hIntegratedYield->GetXaxis()->SetBinLabel(m + 1, SmoltBisNoFactor[m]);
     hIntegratedYield->SetBinContent(m + 1, integratedYield[m]);
     hIntegratedYield->SetBinError(m + 1, integratedYieldStat[m]);
-    hIntegratedYieldSyst->GetXaxis()->SetBinLabel(m + 1, SmoltBisNoFactor[m] + "%");
+    hIntegratedYieldSyst->GetXaxis()->SetBinLabel(m + 1, SmoltBisNoFactor[m]);
     hIntegratedYieldSyst->SetBinContent(m + 1, integratedYield[m]);
-    hIntegratedYieldSyst->SetBinError(m + 1, 1. / 2 * (integratedYieldSystHigh[m] + integratedYieldSystLow[m]));
+    hIntegratedYieldSyst->SetBinError(m + 1, 1. / 2 * (integratedYieldSystHigh[m] + integratedYieldSystLow[m])); // proxy
     if(m == 0) { // take only MB from Run 2
       hIntegratedYieldRun2->SetBinContent(m + 1, hHEPYield->GetBinContent(1));
       hIntegratedYieldRun2->SetBinError(m + 1, hHEPYield->GetBinError(1));
@@ -513,7 +552,7 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     // hFracExtrYield->SetBinContent(m + 1, YieldExtr[m] / Yield[m]);
     // hFracExtrYield->SetBinError(m + 1, 0);
     cout << "\n\n************************************" << endl;
-    //cout << "Multiplicity class: " << SmoltBis[m] << endl;
+    cout << "Multiplicity class: " << SmoltBis[m] << endl;
     cout << "integratedYield: " << integratedYield[m] << " +- " << integratedYieldStat[m] << " (stat.) + " << integratedYieldSystHigh[m] << " - " << integratedYieldSystLow[m] << " (syst.) " << endl;
     // cout << "Mean: " << Mean[m] << " +- " << MeanErrStat[m] << endl;
   }
@@ -538,9 +577,163 @@ void yieldInMultFitted(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   legendIntegrated->AddEntry(hIntegratedYield, nameFit[typefit] + " fit", "pl");
   legendIntegrated->AddEntry(hIntegratedYieldRun2, "Eur.Phys.J.C.80 (2020) 167, pp, #sqrt{#it{s}} = 13 TeV", "pl");
   legendIntegrated->Draw("same");
-
   legendTitleIntegrated->Draw("same");
+  outputfile->cd();
+  canvasIntegratedYields->Write();
 
+  // Integrated yield vs dN/dEta //
+  TLegend *legendTitleIntegrateddNdEta = new TLegend(0.150, 0.669, 0.352, 0.868);
+  StyleLegend(legendTitleIntegrateddNdEta, 0.0, 0.0);
+  legendTitleIntegrateddNdEta->SetTextAlign(11);
+  legendTitleIntegrateddNdEta->SetTextSize(0.04);
+  legendTitleIntegrateddNdEta->SetTextFont(42);
+  legendTitleIntegrateddNdEta->SetLineColorAlpha(0.,0.);
+  legendTitleIntegrateddNdEta->SetFillColorAlpha(0.,0.);
+  legendTitleIntegrateddNdEta->AddEntry("", "#bf{ALICE Work In Progress}", "");
+  legendTitleIntegrateddNdEta->AddEntry("", "pp, #sqrt{#it{s}} = 13.6 TeV", "");
+  legendTitleIntegrateddNdEta->AddEntry("", particleSymnbols[nParticle] + ", |y| < 0.5", "");
+
+  TLegend *legendIntegrateddNdEta = new TLegend(0.191, 0.461, 0.392, 0.639);
+  legendIntegrateddNdEta->SetFillStyle(0);
+  legendIntegrateddNdEta->SetTextSize(0.03);
+
+  TLegend * legUncert = new TLegend(0.6, 0.26, 0.91, 0.35);
+  legUncert->SetFillColor(0);
+  legUncert->SetTextAlign(11);
+  legUncert->SetTextSize(0.04);
+
+  TCanvas *canvasIntegratedYieldsdNdEta = new TCanvas("canvasIntegratedYieldsdNdEta","canvasIntegratedYieldsdNdEta", 0,66,857,708);
+  canvasIntegratedYieldsdNdEta->cd();
+  canvasIntegratedYieldsdNdEta->Draw();
+  StyleCanvas(canvasIntegratedYieldsdNdEta, 0.14, 0.05, 0.11, 0.15);
+  TMultiGraph *mg = new TMultiGraph("integratedYields", "");
+  TGraphAsymmErrors *gdNdEta = new TGraphAsymmErrors(numMult);
+  TGraphAsymmErrors *gdNdEtaSyst = new TGraphAsymmErrors(numMult);
+  TGraphAsymmErrors *gdNdEtaMB = new TGraphAsymmErrors(1);
+  TGraphAsymmErrors *gdNdEtaMBSyst = new TGraphAsymmErrors(1);
+  for (int i = 1; i < numMult + 1; ++i) {
+    gdNdEta->SetPoint(i-1, etaDensity[i], integratedYield[i]);
+    gdNdEta->SetPointError(i-1, etaDensityErrLow[i], etaDensityErrHigh[i], integratedYieldStat[i], integratedYieldStat[i]);
+    gdNdEtaSyst->SetPoint(i-1, etaDensity[i], integratedYield[i]);
+    gdNdEtaSyst->SetPointError(i-1, etaDensityErrLow[i], etaDensityErrHigh[i], integratedYieldSystLow[i], integratedYieldSystHigh[i]);
+  }
+  gdNdEtaMB->SetPoint(0, etaDensity[0], integratedYield[0]);
+  gdNdEtaMB->SetPointError(0, etaDensityErrLow[0], etaDensityErrHigh[0], integratedYieldSystLow[0], integratedYieldSystHigh[0]);
+  gdNdEtaMBSyst->SetPoint(0, etaDensity[0], integratedYield[0]);
+  gdNdEtaMBSyst->SetPointError(0, etaDensityErrLow[0], etaDensityErrHigh[0], integratedYieldSystLow[0], integratedYieldSystHigh[0]);
+
+  TGraphAsymmErrors *gdNdEtaRun2 = new TGraphAsymmErrors(hHEPYieldInClasses->GetNbinsX());
+  TGraphAsymmErrors *gdNdEtaRun2Syst = new TGraphAsymmErrors(hHEPYieldInClasses->GetNbinsX());
+  TGraphAsymmErrors *gdNdEtaRun2SystUncorr = new TGraphAsymmErrors(hHEPYieldInClasses->GetNbinsX());
+
+  TGraphAsymmErrors *gdNdEtaRun2Tracklets = new TGraphAsymmErrors(hHEPYieldInTrackletClasses->GetNbinsX());
+  TGraphAsymmErrors *gdNdEtaRun2TrackletsSyst = new TGraphAsymmErrors(hHEPYieldInTrackletClasses->GetNbinsX());
+  TGraphAsymmErrors *gdNdEtaRun2TrackletsSystUncorr = new TGraphAsymmErrors(hHEPYieldInTrackletClasses->GetNbinsX());
+
+  for (int i = 1; i <= hHEPYieldInClasses->GetNbinsX(); ++i) {
+    gdNdEtaRun2->SetPoint(i-1, hHEPYieldInClasses->GetBinCenter(i), hHEPYieldInClasses->GetBinContent(i));
+    //std::cout << "x: " << hHEPYieldInClasses->GetBinCenter(i) << " y: " << hHEPYieldInClasses->GetBinContent(i) << std::endl;
+    gdNdEtaRun2Syst->SetPoint(i-1, hHEPYieldInClasses->GetBinCenter(i), hHEPYieldInClasses->GetBinContent(i));
+    gdNdEtaRun2SystUncorr->SetPoint(i-1, hHEPYieldInClasses->GetBinCenter(i), hHEPYieldInClasses->GetBinContent(i));
+
+    Double_t xError = (hHEPYieldInClasses->GetXaxis()->GetBinUpEdge(i) - hHEPYieldInClasses->GetXaxis()->GetBinLowEdge(i)) / 2; // CHECK X ERROR CAUSE THERE'RE EMPTY BINS!
+    gdNdEtaRun2->SetPointError(i-1, xError, xError, hHEPYieldInClassese1->GetBinContent(i), hHEPYieldInClassese1->GetBinContent(i));
+    gdNdEtaRun2Syst->SetPointError(i-1, xError, xError, hHEPYieldInClassese2->GetBinContent(i), hHEPYieldInClassese2->GetBinContent(i));
+    gdNdEtaRun2SystUncorr->SetPointError(i-1, xError, xError, hHEPYieldInClassese3->GetBinContent(i), hHEPYieldInClassese3->GetBinContent(i));
+
+    gdNdEtaRun2Tracklets->SetPoint(i-1, hHEPYieldInTrackletClasses->GetBinCenter(i), hHEPYieldInTrackletClasses->GetBinContent(i));
+    //std::cout << "x: " << hHEPYieldInClasses->GetBinCenter(i) << " y: " << hHEPYieldInClasses->GetBinContent(i) << std::endl;
+    gdNdEtaRun2TrackletsSyst->SetPoint(i-1, hHEPYieldInTrackletClasses->GetBinCenter(i), hHEPYieldInTrackletClasses->GetBinContent(i));
+    gdNdEtaRun2TrackletsSystUncorr->SetPoint(i-1, hHEPYieldInTrackletClasses->GetBinCenter(i), hHEPYieldInTrackletClasses->GetBinContent(i));
+
+    xError = (hHEPYieldInTrackletClasses->GetXaxis()->GetBinUpEdge(i) - hHEPYieldInTrackletClasses->GetXaxis()->GetBinLowEdge(i)) / 2;
+    gdNdEtaRun2Tracklets->SetPointError(i-1, xError, xError, hHEPYieldInTrackletClassese1->GetBinContent(i), hHEPYieldInTrackletClassese1->GetBinContent(i));
+    gdNdEtaRun2TrackletsSyst->SetPointError(i-1, xError, xError, hHEPYieldInTrackletClassese2->GetBinContent(i), hHEPYieldInTrackletClassese2->GetBinContent(i));
+    gdNdEtaRun2TrackletsSystUncorr->SetPointError(i-1, xError, xError, hHEPYieldInTrackletClassese3->GetBinContent(i), hHEPYieldInTrackletClassese3->GetBinContent(i));
+  }
+
+  // Run 3
+  // In FT0M classes
+  gdNdEta->SetMarkerColor(color[0]);
+  gdNdEta->SetMarkerStyle(MarkerMult[0]);
+  gdNdEta->SetMarkerSize(1.5);
+  gdNdEtaSyst->SetMarkerColor(color[0]);
+  gdNdEtaSyst->SetMarkerStyle(MarkerMult[0]);
+  gdNdEtaSyst->SetFillStyle(0);
+  gdNdEtaSyst->SetMarkerSize(1.5);
+
+  // MB
+  gdNdEtaMB->SetMarkerColor(color[1]);
+  gdNdEtaMB->SetMarkerStyle(MarkerMult[1]);
+  gdNdEtaMB->SetMarkerSize(2.0);
+  gdNdEtaMBSyst->SetMarkerColor(color[1]);
+  gdNdEtaMBSyst->SetMarkerStyle(MarkerMult[1]);
+  gdNdEtaMBSyst->SetFillStyle(0);
+  gdNdEtaMBSyst->SetMarkerSize(2.0);
+
+  // Run 2 V0M
+  Int_t run2Style = 8;
+  gdNdEtaRun2->SetMarkerColor(color[run2Style]);
+  gdNdEtaRun2->SetMarkerStyle(MarkerMult[run2Style]);
+  gdNdEtaRun2->SetMarkerSize(1.5);
+  gdNdEtaRun2Syst->SetMarkerColor(color[run2Style]);
+  gdNdEtaRun2Syst->SetMarkerStyle(MarkerMult[run2Style]);
+  gdNdEtaRun2Syst->SetFillStyle(0);
+  gdNdEtaRun2Syst->SetMarkerSize(1.5);
+  gdNdEtaRun2SystUncorr->SetMarkerColor(color[run2Style]);
+  gdNdEtaRun2SystUncorr->SetMarkerStyle(MarkerMult[run2Style]);
+  gdNdEtaRun2SystUncorr->SetFillColor(color[run2Style]);
+  gdNdEtaRun2SystUncorr->SetFillStyle(3001);
+  gdNdEtaRun2SystUncorr->SetMarkerSize(1.5);
+
+  // Run 2 Tracklets
+  Int_t run2TrackletStyle = 6;
+  gdNdEtaRun2Tracklets->SetMarkerColor(color[run2TrackletStyle]);
+  gdNdEtaRun2Tracklets->SetMarkerStyle(MarkerMult[run2TrackletStyle]);
+  gdNdEtaRun2Tracklets->SetMarkerSize(1.5);
+  gdNdEtaRun2TrackletsSyst->SetMarkerColor(color[run2TrackletStyle]);
+  gdNdEtaRun2TrackletsSyst->SetMarkerStyle(MarkerMult[run2TrackletStyle]);
+  gdNdEtaRun2TrackletsSyst->SetFillStyle(0);
+  gdNdEtaRun2TrackletsSyst->SetMarkerSize(1.5);
+  gdNdEtaRun2TrackletsSystUncorr->SetMarkerColor(color[run2TrackletStyle]);
+  gdNdEtaRun2TrackletsSystUncorr->SetMarkerStyle(MarkerMult[run2TrackletStyle]);
+  gdNdEtaRun2TrackletsSystUncorr->SetFillColor(color[run2TrackletStyle]);
+  gdNdEtaRun2TrackletsSystUncorr->SetFillStyle(3001);
+  gdNdEtaRun2TrackletsSystUncorr->SetMarkerSize(1.5);
+
+  legendIntegrateddNdEta->AddEntry(gdNdEta, "FT0M Classes", "epl");
+  legendIntegrateddNdEta->AddEntry(gdNdEtaMB, "MB", "epl");
+  legendIntegrateddNdEta->AddEntry(gdNdEtaRun2, "V0M Classes (Run 2)", "epl");
+  legendIntegrateddNdEta->AddEntry(gdNdEtaRun2Tracklets, "#it{N}_{ tracklets}^{|#it{#eta}|<0.8} (Run 2)", "epl");
+  mg->Add(gdNdEta, "P");
+  mg->Add(gdNdEtaMB, "P");
+  mg->Add(gdNdEtaSyst, "P 5");
+  mg->Add(gdNdEtaMBSyst, "P 5");
+  mg->Add(gdNdEtaRun2, "P");
+  mg->Add(gdNdEtaRun2Syst, "P 5");
+  mg->Add(gdNdEtaRun2SystUncorr, "P 5");
+  mg->Add(gdNdEtaRun2Tracklets, "P");
+  mg->Add(gdNdEtaRun2TrackletsSyst, "P 5");
+  mg->Add(gdNdEtaRun2TrackletsSystUncorr, "P 5");
+  StyleMultGraph(mg, 1e-6, 0.165, sdNdEta, sdNdY, "", 1, 1, 35, 1.35, 1.25, 0.04, 0.04);
+  mg->Draw("a");
+  legUncert->AddEntry(gdNdEta, "stat.", "LE");
+  legUncert->AddEntry(gdNdEtaMB, "syst.", "F");
+  // Dummy histogram to display syst. ucorr. uncertainty gray box
+  TGraphAsymmErrors *gDummy = new TGraphAsymmErrors(1);
+  gDummy->SetMarkerColor(color[0]);
+  gDummy->SetMarkerStyle(MarkerMult[0]);
+  gDummy->SetFillStyle(3001);
+  gDummy->SetFillColor(color[0]);
+  gDummy->SetMarkerSize(1.5);
+  mg->Add(gDummy, "P 5");
+  legUncert->AddEntry(gDummy, "syst. uncorr.", "F");
+  legUncert->Draw("same");
+  legendTitleIntegrateddNdEta->Draw("same");
+  legendIntegrateddNdEta->Draw("same");
+  outputfile->cd();
+  canvasIntegratedYieldsdNdEta->Write();
+  //mg->Write();
   // End of Code
   std::cout << "\x1B[1;32m"; // Set text color to green
   std::cout << "\n************* Spectra in Multiplicity Classes is Fitted! *************\n";

@@ -698,14 +698,18 @@ void effCorr(const  Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   MBeventCorr = MBeventCorr / totWeights;
   std::cout << "total weights: " << totWeights << std::endl;
   eventCorr->SetBinContent(eventCorr->GetNbinsX(), MBeventCorr);
-  eventCorr->SetBinError(eventCorr->GetNbinsX(), sqrt(errorMBeventCorr));
+  eventCorr->SetBinError(eventCorr->GetNbinsX(), sqrt(errorMBeventCorr) / 100);
 
   TAxis *axisEventCorr = eventCorr->GetXaxis();
   axisEventCorr->ChangeLabel(-1, -1, -1, -1, -1, -1, " "); // last
   axisEventCorr->ChangeLabel(-2, -1, -1, -1, -1, -1, " "); // pre-last 
 
-  StyleHisto(eventCorr, 0.5, 1.2 * eventCorr->GetBinContent(eventCorr->GetMaximumBin()), color[0], MarkerMult[0], "FT0M Multiplicity percentile", "Event Factor", "", 0, 0, 0, 1.0, 1.25, SizeMult[0], 0.04, 0.04);
+  StyleHisto(eventCorr, 0.5, 1.4 * eventCorr->GetBinContent(eventCorr->GetMaximumBin()), color[0], MarkerMult[0], "FT0M Multiplicity percentile", "Event Factor", "", 0, 0, 0, 1.0, 1.25, SizeMult[0], 0.04, 0.04);
+  TH1F* eventCorrClone = (TH1F*)eventCorr->Clone("eventCorrClone");
+  StyleHisto(eventCorrClone, 0.5, 1.4 * eventCorrClone->GetBinContent(eventCorr->GetMaximumBin()), color[0], 0, "FT0M Multiplicity percentile", "Event Factor", "", 0, 0, 0, 1.0, 1.25, SizeMult[0], 0.04, 0.04);
+  eventCorrClone->GetXaxis()->SetRangeUser(40, 150);
   eventCorr->Draw("same HIST");
+  eventCorrClone->Draw("same TEXT90");
   TLatex labelMB;
   labelMB.SetTextSize(0.05);
   labelMB.SetTextAlign(12);
@@ -924,12 +928,21 @@ void effCorr(const  Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   {
     cout << "MB yield" << endl;
     hSignalLoss = (TH1F*)hEffCascadeSumSignal->Clone("hSignalLossMB");
+
     // TF1 *fitPol1 = new TF1("fitPol1", "[0]*x + [1]", binpt[0], binpt[numPtBins]);
     // fitPol1->SetParameters(0.01, 0.9);
     // padEffSignalInClassesUp->cd();
     // hSignalLoss->Fit(fitPol1, "QR0"); // Fit wil pol1
     // fitPol1->Draw("same");
     //cout << "Chi2/NDF " << fitPol1->GetChisquare() / fitPol1->GetNDF() << endl;
+
+    TF1 *fitExp = new TF1("fitExp", "[0]*exp([1]*x-[2]) + [3]", binpt[0], binpt[numPtBins]);
+    fitExp->SetParameters(-0.4, -5.7, -0.1, 1);
+    padEffSignalInClassesUp->cd();
+    hSignalLoss->Fit(fitExp, "QR0"); // Fit low-mult. with exponent
+    fitExp->Draw("same");
+    //cout << "Chi2/NDF " << fitExp->GetChisquare() / fitExp->GetNDF() << endl;
+
     // Compute it like a separate class //
     for (Int_t b = 1; b <= hYield[0]->GetNbinsX(); b++) {
       Double_t relErr = 0;
@@ -948,15 +961,26 @@ void effCorr(const  Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
 
       Double_t xValue = hSignalLoss->GetXaxis()->GetBinCenter(b);
       // Take values from histogram
-      sigLoss = hSignalLoss->GetBinContent(b);
-      relErrSigLoss = hSignalLoss->GetBinError(hSignalLoss->FindBin(hYieldCorrected[0]->GetXaxis()->GetBinCenter(b))) / sigLoss;
+      // sigLoss = hSignalLoss->GetBinContent(b);
+      // relErrSigLoss = hSignalLoss->GetBinError(hSignalLoss->FindBin(hYieldCorrected[0]->GetXaxis()->GetBinCenter(b))) / sigLoss;
       // Take values from fit
+      // Pol1
       // sigLoss = fitPol1->Eval(xValue);
 
       // Double_t sig0 = xValue * fitPol1->GetParError(0);
       // Double_t sig1 = fitPol1->GetParError(1);
 
       // relErrSigLoss = sqrt(pow(sig0,2) + pow(sig1,2)) / sigLoss;
+      // EXP
+      sigLoss = fitExp->Eval(xValue);
+
+      Double_t withoutConst = sigLoss - fitExp->GetParameter(3);
+      Double_t sig0 = (withoutConst / fitExp->GetParameter(0)) * fitExp->GetParError(0);
+      Double_t sig1 = withoutConst * xValue * fitExp->GetParError(1);
+      Double_t sig2 = withoutConst * fitExp->GetParError(2);
+      Double_t sig3 = fitExp->GetParError(3);
+
+      relErrSigLoss = sqrt(pow(sig0,2) + pow(sig1,2) + pow(sig2,2) + pow(sig3,2)) / sigLoss;
 
       hYieldCorrected[0]->SetBinContent(b, hYieldCorrected[0]->GetBinContent(b) / sigLoss);
       std::cout << "yield after signal loss: " << hYieldCorrected[0]->GetBinContent(b) << std::endl;

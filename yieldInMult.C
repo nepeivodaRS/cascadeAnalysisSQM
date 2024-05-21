@@ -106,9 +106,9 @@ void yieldInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     // Syst. histo
     hYieldsRatioSyst[iFile] = (TH1F *)hYieldSyst[iFile]->Clone(Form("YieldCloneSyst_%i_", iFile) + particleNames[nParticle]);
     if (iFile == 0) {
-      hYieldsDenom = (TH1F *)hYield[iFile]->Clone("YieldCloneForDenom_" + particleNames[nParticle]);
+      hYieldsDenom = (TH1F *)hYield[0]->Clone("YieldCloneForDenom_" + particleNames[nParticle]);
       // Syst. histo
-      hYieldsDenomSyst = (TH1F *)hYieldSyst[iFile]->Clone("YieldCloneForDenomSyst_" + particleNames[nParticle]);
+      hYieldsDenomSyst = (TH1F *)hYieldSyst[0]->Clone("YieldCloneForDenomSyst_" + particleNames[nParticle]);
     }
 
     hYieldsRatio[iFile]->Divide(hYieldsDenom);
@@ -137,6 +137,8 @@ void yieldInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     Double_t weight = 0;
     if (iFile > 1) {
       weight = cumulativeEvents->GetBinContent(iFile) - cumulativeEvents->GetBinContent(iFile - 1);
+      std::cout << "1: " << cumulativeEvents->GetBinContent(iFile) << std::endl;
+      std::cout << "2: " << cumulativeEvents->GetBinContent(iFile - 1) << std::endl;
     } else {
       weight = cumulativeEvents->GetBinContent(iFile);
     }
@@ -145,6 +147,7 @@ void yieldInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     // Syst. histo
     hYieldPerPercSyst->Scale(weight * (multiplicityPerc[iFile] - multiplicityPerc[iFile - 1]));
 
+    std::cout << "sum weights:" << sumWeights/10.5117*100 << std::endl;
     std::cout << "weight: " << weight * (multiplicityPerc[iFile] - multiplicityPerc[iFile - 1]) << " class: " << multiplicityPerc[iFile - 1] << " - " <<  multiplicityPerc[iFile] << std::endl;
     hYieldMBsummed->Add(hYieldPerPerc);
     // Syst. histo
@@ -222,8 +225,8 @@ void yieldInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     }
   }
 
-  Double_t yieldYLow[2] = {1e-10, 0.2*1e-8};
-  Double_t yieldYUp[2] = {9*1e4, 9*1e4};
+  Double_t yieldYLow[2] = {1e-9, 0.2*1e-8};
+  Double_t yieldYUp[2] = {9*1e5, 9*1e4};
 
   Int_t partType;
   if (nParticle <= 2) {
@@ -239,6 +242,7 @@ void yieldInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hDummy->SetBinContent(i, 1e-12);
   canvasYield->cd();
   padYieldUp->cd();
+  padYieldUp->SetLogy();
   StyleHisto(hDummy, yieldYLow[partType], yieldYUp[partType], 1, 1, "#it{p}_{T} (GeV/#it{c})", sdNdPtdY, "", 0, 0, 0, 1.5, 1.0, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
   SetTickLength(hDummy, 0.025, 0.03);
   TAxis *axisYieldDummy = hDummy->GetYaxis();
@@ -280,8 +284,6 @@ void yieldInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hYieldSyst[iFile]->SetFillStyle(0);
     hYieldSyst[iFile]->Draw("same e2"); // e2 - syst
 
-    padYieldUp->SetLogy();
-
     // Low
     padYieldLow->cd();
     StyleHisto(hYieldsRatio[iFile], 0.1 , 11, color[iFile], MarkerMult[iFile], "#it{p}_{T} (GeV/#it{c})", "Ratio to 0-100%", "", 0, 0, 0, 1.0, 0.7, SizeMult[iFile], 0.08, 0.08, 0.08, 0.08, 0.005);
@@ -314,9 +316,8 @@ void yieldInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   hYieldsRatioOfMBsummedSyst->Draw("same e2"); // e2 - syst
 
   padYieldUp->cd();
-  canvasYield->Draw();
-  legendTitle->Draw();
-  legYield->Draw();
+  legendTitle->Draw("same");
+  legYield->Draw("same");
   gPad->Update();
   canvasYield->Update();
 
@@ -324,7 +325,6 @@ void yieldInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   DrawHorLine(hYieldsRatio[0]->GetXaxis()->GetBinUpEdge(hYieldsRatio[0]->GetNbinsX()) + 0.5, 1.0);
   outputfile->cd();
   canvasYield->Write();
-
 
   // End of Code
   std::cout << "\x1B[1;32m"; // Set text color to green

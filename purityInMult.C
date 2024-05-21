@@ -185,7 +185,7 @@ void purityInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     legPurity->AddEntry(hPurity[iFile], SmoltBis[iFile], "pef");
     hPurity[iFile]->Draw("same ex0");
     hPurity[iFile]->SetFillStyle(0);
-    hPurity[iFile]->Draw("same e2");
+    //hPurity[iFile]->Draw("same e2");
 
     // Low
     padPurityLow->cd();
@@ -193,7 +193,7 @@ void purityInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     if (iFile != 0) {
       hPurityRatio[iFile]->Draw("same ex0");
       hPurityRatio[iFile]->SetFillStyle(0);
-      hPurityRatio[iFile]->Draw("same e2");
+      //hPurityRatio[iFile]->Draw("same e2");
     }
   }
 

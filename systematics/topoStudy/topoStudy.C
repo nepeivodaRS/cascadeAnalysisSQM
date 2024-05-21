@@ -359,7 +359,7 @@ void topoStudy(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     Double_t cutMax = 1;
     Double_t xAxisLimits[2] = {cutMin - (cutMax - cutMin)*0.1, cutMax + (cutMax - cutMin)*0.1};
     Double_t yAxisLimitsUp[2] = {-0.1, 1.5};
-    Double_t yAxisLimitsLow[2] = {0.9, 1.1};
+    Double_t yAxisLimitsLow[2] = {0.8, 1.2};
     TString xLabel = "Configs (bin-by-bin data-sorted by signal loss)";
 
     Int_t colorPt[numPtBins];
@@ -434,7 +434,7 @@ void topoStudy(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     legendTitle->AddEntry("", "pp, #sqrt{#it{s}} = 13.6 TeV", "");
     legendTitle->AddEntry("", particleSymnbols[nParticle] + ", |y| < 0.5", "");
 
-    Int_t scaling = 1;
+    Int_t scaling = 20;
 
     TLegend *legendTitleLow = new TLegend(0.609, 0.693913, 0.908, 0.893);
     StyleLegend(legendTitleLow, 0.0, 0.0);

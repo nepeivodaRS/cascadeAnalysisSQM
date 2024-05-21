@@ -127,8 +127,8 @@ void meanInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     }
   }
 
-  Double_t meanYLow[2] = {1.3165, 1.668};
-  Double_t meanYUp[2] = {1.325, 1.677};
+  Double_t meanYLow[2] = {1.3200, 1.668};
+  Double_t meanYUp[2] = {1.3235, 1.677};
 
   Int_t partType;
   if (nParticle <= 2) {
@@ -144,7 +144,7 @@ void meanInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hDummy->SetBinContent(i, 1e-12);
   canvasMean->cd();
   padMeanUp->cd();
-  StyleHisto(hDummy, meanYLow[partType], meanYUp[partType], 1, 1, "#it{p}_{T} (GeV/#it{c})", "Mean (GeV/#it{c}^{2})", "", 0, 0, 0, 1.5, 1.2, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
+  StyleHisto(hDummy, meanYLow[partType], meanYUp[partType], 1, 1, "#it{p}_{T} (GeV/#it{c})", "Mean (GeV/#it{c}^{2})", "", 0, 0, 0, 1.5, 1.3, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
   SetTickLength(hDummy, 0.025, 0.03);
   TAxis *axisMeanDummy = hDummy->GetYaxis();
   axisMeanDummy->ChangeLabel(1, -1, -1, -1, -1, -1, " ");
@@ -187,7 +187,7 @@ void meanInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     legMean->AddEntry(hMean[iFile], SmoltBis[iFile], "pef");
     hMean[iFile]->Draw("same ex0");
     hMean[iFile]->SetFillStyle(0);
-    hMean[iFile]->Draw("same e2");
+    //hMean[iFile]->Draw("same e2");
 
     // Low
     padMeanLow->cd();
@@ -195,7 +195,7 @@ void meanInMult(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     if (iFile != 0) {
       hMeanRatio[iFile]->Draw("same ex0");
       hMeanRatio[iFile]->SetFillStyle(0);
-      hMeanRatio[iFile]->Draw("same e2");
+      //hMeanRatio[iFile]->Draw("same e2");
     }
   }
 

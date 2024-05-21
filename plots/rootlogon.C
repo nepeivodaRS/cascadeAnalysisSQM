@@ -1,6 +1,6 @@
 void rootlogon() {
-  const Int_t numMult = 9; // number of multiplicity sub-intervals
-  // Color palette
+  const Int_t numMult = 10; // number of multiplicity sub-intervals
+// Color palette
   const int NRGBs = 5;
   double stops[NRGBs] = { 0.00, 0.24, 0.61, 0.84, 1.00 };
   // double stops[NRGBs] = { 0.00, 0.25, 0.50, 0.75, 1.00 };

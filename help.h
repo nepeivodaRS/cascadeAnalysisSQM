@@ -154,7 +154,8 @@ TString sInvMass = "invariant mass (GeV/#it{c}^{2})";
 TString sPt = "#it{p}_{T} (GeV/#it{c})";
 TString sdNdPt = "1/#it{N}_{ev} d#it{N}/d#it{p}_{T} [(GeV/#it{c})^{-1}]";
 TString sdNdPtdY = "1/#it{N}_{ev} d^{2}#it{N}/(d#it{p}_{T}d#it{y}) [(GeV/#it{c})^{-1}]";
-TString sdNdY = "1/#it{N}_{ev} d#it{N}/d#it{y}";
+TString sdNdY = "#LTd#it{N}/d#it{y}#GT";
+TString sdNdEta = "#LTd#it{N}_{ch}/d#it{#eta}#GT_{|#it{#eta}| < 0.5}";
 
 // const Int_t numMult = 13; // number of multiplicity sub-intervals
 // Double_t multiplicityPerc[numMult + 1] = {0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 50, 70, 85, 100};
@@ -179,11 +180,11 @@ int FIEff = TColor::CreateGradientColorTable(NRGBs,stops,red,green,blue,numMultE
 
 ////// BINNING //////
 // Xi binning
-const Int_t numPtXi = 18;
-Double_t binptXi[numPtXi + 1] = {0.6, 0.8, 1.0,
-                                1.2, 1.4, 1.6, 1.8, 2.0,
-                                2.2, 2.4, 2.6, 2.8, 3.0,
-                                3.5, 4.0, 4.5, 5.0, 6.0, 8.0};
+// const Int_t numPtXi = 18;
+// Double_t binptXi[numPtXi + 1] = {0.6, 0.8, 1.0,
+//                                 1.2, 1.4, 1.6, 1.8, 2.0,
+//                                 2.2, 2.4, 2.6, 2.8, 3.0,
+//                                 3.5, 4.0, 4.5, 5.0, 6.0, 8.0};
 
 // Topo study //
 // const Int_t numPtXi = 5;
@@ -192,11 +193,11 @@ Double_t binptXi[numPtXi + 1] = {0.6, 0.8, 1.0,
 // Double_t binptXi[numPtXi + 1] = {0.6, 8.0};                         
 
 //Xi binning to compare with Run 2
-// const Int_t numPtXi = 13; // to compare with Run 2
-// Double_t binptXi[numPtXi + 1] = {0.6, 1.0,
-//                                 1.2, 1.4, 1.6, 1.8, 2.0,
-//                                 2.2, 2.5, 2.9, 3.4,
-//                                 4.0, 5.0, 6.5};
+const Int_t numPtXi = 13; // to compare with Run 2
+Double_t binptXi[numPtXi + 1] = {0.6, 1.0,
+                                1.2, 1.4, 1.6, 1.8, 2.0,
+                                2.2, 2.5, 2.9, 3.4,
+                                4.0, 5.0, 6.5};
 
 int FIptxi = TColor::CreateGradientColorTable(NRGBs,stops,red,green,blue,numPtXi);       
 
@@ -213,4 +214,9 @@ Double_t binptOmega[numPtOmega + 1] = {0.8, 1.0,
 //Double_t ScaleFactorMB = pow(2, 19);
 // Xi
 Double_t ScaleFactor[] = {4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1};
+Float_t etaDensity[] = {7.15, 20.62,  17.62, 15.11, 13.37, 12.02, 10.43, 8.74,  7.34, 5.64, 3.42};
+Float_t etaDensityErrLow[] = {0.12, 0.43, 0.28, 0.24, 0.21, 0.19, 0.19, 0.16, 0.13, 0.10, 0.07};
+Float_t etaDensityErrHigh[] = {0.09, 0.37, 0.21, 0.18, 0.16, 0.15,0.13, 0.11, 0.09, 0.07, 0.05};
+Float_t fractionsINEL0run2[] = {0.0, 0.90, 4.5, 8.9, 13.5, 18.0, 27.0, 36.1, 45.3, 64.5, 100.0};
+// Float_t fractionsINEL0run2[] = {0.0, 1.0, 5.0, 10.0, 15.0, 20.0, 30.0, 40.0, 50.0, 70.0, 100.0};
 Double_t ScaleFactorMB = pow(2, 16);

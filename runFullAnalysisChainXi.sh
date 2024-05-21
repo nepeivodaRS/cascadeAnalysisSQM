@@ -36,8 +36,8 @@ pathToEfficiency="\"${PWD}/efficiencies/efficiency_XiPm_LHC24b1b.root\""
 #                 \"\",
 #                 \"_LHC24b1b\")"
 
-root -l "yieldInMult.C(2, 0, $workingDir, \"\",  \"_LHC24b1b\")"
+# root -l "yieldInMult.C(2, 0, $workingDir, \"\",  \"_LHC24b1b\")"
 # root -l "meanInMult.C(2, 0, $workingDir)"
 # root -l "sigmaInMult.C(2, 0, $workingDir)"
 # root -l "purityInMult.C(2, 0, $workingDir)"
-# root -l "yieldInMultFitted.C(2, 0, 3, $workingDir, \"\")"
+root -l "yieldInMultFitted.C(2, 0, 3, $workingDir, \"\")"

@@ -288,7 +288,7 @@ TH1* YieldMean_ReturnExtremeHardHisto(TH1 *hin)
 }
 
 
-TH1* YieldMean(TH1 *hstat, TH1 *hsys, TF1 *f = NULL, Double_t min = 0., Double_t max = 10., Double_t loprecision = 0.01, Double_t hiprecision = 0.1, Option_t *opt = "0q",TString logfilename="log.root",Double_t minfit=0.0,Double_t maxfit=10.0)
+TH1* YieldMean(TH1 *hstat, TH1 *hsys, TF1 *f = NULL, Double_t min = 0., Double_t max = 10., Double_t loprecision = 0.01, Double_t hiprecision = 0.1, Option_t *opt = "0q",TString logfilename="log.root",Double_t minfit=0.6,Double_t maxfit=8.0)
 {
   if(maxfit>max)
     max=maxfit; 

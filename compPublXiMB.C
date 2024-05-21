@@ -33,6 +33,8 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   std::cout << "\n************ Starting Making Comparison with Published Results ************\n";
   std::cout << "\x1B[0m"; // Reset text color
 
+  gStyle->SetOptStat(0);
+
   TString outputfilePath = workingDir + "/comparisons/" + "mbXi" + ".root";
   TFile *outputfile = new TFile(outputfilePath, "RECREATE");
 
@@ -52,6 +54,7 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   }
 
   TH1F* hHEPYield = (TH1F *)yieldHEPDir->Get("Hist1D_y11");
+  TH1F* hHEPYieldSyst = (TH1F *)hHEPYield->Clone("Hist1D_y11_Syst");
   TH1F* hHEPYielde1 = (TH1F *)yieldHEPDir->Get("Hist1D_y11_e1");
   TH1F* hHEPYielde2 = (TH1F *)yieldHEPDir->Get("Hist1D_y11_e2");
   TH1F* hHEPYielde3 = (TH1F *)yieldHEPDir->Get("Hist1D_y11_e3");
@@ -70,7 +73,8 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     e2 = hHEPYielde2->GetBinContent(iBin);
     e3 = hHEPYielde3->GetBinContent(iBin); // uncorrelated
     //hHEPYield->SetBinError(iBin, sqrt(pow(e1, 2) + pow(e2, 2)) + e3);
-    hHEPYield->SetBinError(iBin, sqrt(pow(e1, 2))); // only statistical uncert.
+    hHEPYield->SetBinError(iBin, e1); // only statistical uncert.
+    hHEPYieldSyst->SetBinError(iBin, e2); // only syst. uncert.
   }
 
   // Files with yields in all mult. classes + MB
@@ -95,7 +99,16 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     }
   }
 
+  TString fileInPathSyst = workingDir + "/systematics/sourcesOfSyst/totalSystematics.root";
+  TFile* fileSystin = TFile::Open(fileInPathSyst);
+  if (!fileSystin || fileSystin->IsZombie()) {
+      std::cerr << "Error opening `fileSystin` data file!" << std::endl;
+      return;
+  }
+  TH1F* hSystUncert = (TH1F *)fileSystin->Get("hSystTotal");
+
   TH1F* hYield[numMult + 1];
+  TH1F* hYieldSyst[numMult + 1];
   TDirectory* yieldDir[numMult + 1];
 
   // Get yields
@@ -108,37 +121,22 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     }
 
     hYield[iFile] = (TH1F *)yieldDir[iFile]->Get("Yield_" + particleNames[nParticle]);
-  }
-
-  TH1F* hYieldMBsummed;
-  hYieldMBsummed = (TH1F*)hYield[0]->Clone("hYieldMBsummed");
-  hYieldMBsummed->Reset();
-  for (Int_t iFile = 1; iFile < numMult + 1; iFile++) {
-    TH1F* hYieldPerPerc = (TH1F*)hYield[iFile]->Clone("hYieldPerPerc");
-    hYieldPerPerc->Scale(multiplicityPerc[iFile] - multiplicityPerc[iFile - 1]);
-    std::cout << "class width: " << (multiplicityPerc[iFile] - multiplicityPerc[iFile - 1]) << std::endl;
-    hYieldMBsummed->Add(hYieldPerPerc);
-  }
-  hYieldMBsummed->Scale(1. / 100);
-
-  TDirectory* yieldEffCorrDir = fileDataIn[0]->GetDirectory("effCorrYield");
-  if (!yieldEffCorrDir)
-  {
-    std::cerr << "`effCorrYield` directory in data is not found!" << std::endl;
-    return;
-  }
-
-  TH1F* hEffCorrYield = (TH1F *)yieldEffCorrDir->Get("Yield_XiPm");
-  if (!hEffCorrYield)
-  {
-    std::cerr << "Histogram `Yield_XiPm` is not found!" << std::endl;
-    return;
+    // Syst. histo
+    hYieldSyst[iFile] = (TH1F*)hYield[iFile]->Clone(Form("YieldSys_%i_",iFile) + particleNames[nParticle]); 
+    for (Int_t bin = 1; bin <= hYield[iFile]->GetNbinsX(); bin++) {
+      hYieldSyst[iFile]->SetBinError(bin, hSystUncert->GetBinContent(hSystUncert->FindBin(hYield[iFile]->GetBinCenter(bin)))*hYield[iFile]->GetBinContent(bin));
+    }
   }
 
   TH1F* hYieldsDenom = (TH1F *)hHEPYield->Clone("YieldHEPDataClone");
+  TH1F* hYieldsDenomSyst = (TH1F *)hHEPYieldSyst->Clone("YieldHEPDataSystClone");
   //TH1F* hYieldsRatio = (TH1F *)hYield[0]->Clone("YieldClone");
-  TH1F* hYieldsRatio = (TH1F *)hYieldMBsummed->Clone("YieldClone");
+  TH1F* hYieldsRatio = (TH1F *)hYield[0]->Clone("YieldClone");
+  TH1F* hYieldsRatioSyst = (TH1F *)hYieldSyst[0]->Clone("YieldSystClone");
   hYieldsRatio->Divide(hYieldsDenom);
+  ErrRatioCorr(hYield[0], hYieldsDenom, hYieldsRatio, 0);
+  hYieldsRatioSyst->Divide(hYieldsDenomSyst);
+  ErrRatioCorr(hYieldSyst[0], hYieldsDenomSyst, hYieldsRatioSyst, 0);
 
   Double_t yieldYLow[2] = {0.1*1e-5, 0.2*1e-8};
   Double_t yieldYUp[2] = {0.04, 3*1e4};
@@ -156,7 +154,6 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   canvasComparison->cd();
   padYieldUp->Draw();
   padYieldLow->Draw();
-  gStyle->SetOptStat(0);
 
   // Yield Legend
   TLegend *legYield = new TLegend(0.186, 0.0625, 0.893, 0.3125);
@@ -177,11 +174,11 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   legendTitle->SetFillColorAlpha(0.,0.);
   legendTitle->AddEntry("", "#bf{ALICE Work In Progress}", "");
   legendTitle->AddEntry("", particleSymnbols[2] + ", |y| < 0.5", "");
-  legendTitle->AddEntry("", "Statistical uncert. only", "");
+  //legendTitle->AddEntry("", "Statistical uncert. only", "");
 
   Int_t compStyle = 3;
-  StyleHisto(hEffCorrYield, yieldYLow[partType], yieldYUp[partType], color[0], MarkerMult[0], "", hEffCorrYield->GetYaxis()->GetTitle(), "", 0, 0, 0, 1.5, 1.0, SizeMult[0], 0.0, 0.05, 0.0, 0.035, 0.005);
-  StyleHisto(hHEPYield, yieldYLow[partType], yieldYUp[partType], color[compStyle], MarkerMult[compStyle], "", hEffCorrYield->GetYaxis()->GetTitle(), "", 0, 0, 0, 1.5, 1.0, SizeMult[compStyle], 0.0, 0.05, 0.0, 0.035, 0.005);
+  StyleHisto(hHEPYield, yieldYLow[partType], yieldYUp[partType], color[compStyle], MarkerMult[compStyle], "", hHEPYield->GetYaxis()->GetTitle(), "", 0, 0, 0, 1.5, 1.0, SizeMult[compStyle], 0.0, 0.05, 0.0, 0.035, 0.005);
+  StyleHisto(hHEPYieldSyst, yieldYLow[partType], yieldYUp[partType], color[compStyle], MarkerMult[compStyle], "", hHEPYieldSyst->GetYaxis()->GetTitle(), "", 0, 0, 0, 1.5, 1.0, SizeMult[compStyle], 0.0, 0.05, 0.0, 0.035, 0.005);
 
   // Dummy histograms to extend x-axis
   TH1F *hDummy = new TH1F("hDummy", "hDummy", 10000, 0, 8.5);
@@ -190,11 +187,12 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
     hDummy->SetBinContent(i, 1e-12);
   canvasComparison->cd();
   padYieldUp->cd();
+  padYieldUp->SetLogy();
   StyleHisto(hDummy, yieldYLow[partType], yieldYUp[partType], 1, 1, "#it{p}_{T} (GeV/#it{c})", sdNdPtdY, "", 0, 0, 0, 1.5, 1.0, 0, 0.0, 0.05, 0.0, 0.035, 0.005);
   SetTickLength(hDummy, 0.025, 0.03);
   TAxis *axisYieldDummy = hDummy->GetYaxis();
   axisYieldDummy->ChangeLabel(1, -1, -1, -1, -1, -1, " ");
-  hDummy->GetXaxis()->SetRangeUser(0, hEffCorrYield->GetXaxis()->GetBinUpEdge(hEffCorrYield->GetNbinsX()) + 0.5);
+  hDummy->GetXaxis()->SetRangeUser(0, hYield[0]->GetXaxis()->GetBinUpEdge(hYield[0]->GetNbinsX()) + 0.5);
   hDummy->Draw("same");
   // Low
   TH1F *hDummyLow = new TH1F("hDummyLow", "hDummyLow", 10000, 0, 8.5);
@@ -210,23 +208,23 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
   axisDummyLow->ChangeLabel(-1, -1, -1, -1, -1, -1, " ");
   hDummyLow->Draw("same");
 
+  // Plot yields
   padYieldUp->cd();
-  hEffCorrYield->Draw("same ex0");
-  //hEffCorrYield->SetFillStyle(0);
-  //hEffCorrYield->Draw("same e2");
-  legYield->AddEntry(hEffCorrYield, "pp, #sqrt{#it{s}} = 13.6 TeV", "pef");
+  hYield[0]->Draw("same ex0");
+  hYieldSyst[0]->SetFillStyle(0);
+  hYieldSyst[0]->Draw("same e2");
+  legYield->AddEntry(hYield[0], "pp, #sqrt{#it{s}} = 13.6 TeV", "pef");
   hHEPYield->Draw("same ex0");
-  //hHEPYield->SetFillStyle(0);
-  //hHEPYield->Draw("same e2");
+  hHEPYieldSyst->SetFillStyle(0);
+  hHEPYieldSyst->Draw("same e2");
   legYield->AddEntry(hHEPYield, "Eur.Phys.J.C.80 (2020) 167, pp, #sqrt{#it{s}} = 13 TeV", "pef");
-  padYieldUp->SetLogy();
 
+  // Plot ratios
   padYieldLow->cd();
   StyleHisto(hYieldsRatio, 0.5 , 1.1, color[0], MarkerMult[0], "#it{p}_{T} (GeV/#it{c})", "Ratio to Published", "", 0, 0, 0, 1.0, 0.7, SizeMult[0], 0.08, 0.08, 0.08, 0.08, 0.005);
   hYieldsRatio->Draw("same ex0");
-  hYieldsRatio->SetFillStyle(0);
-  hYieldsRatio->Draw("same e2");
-  //padYieldLow->SetLogy();
+  hYieldsRatioSyst->SetFillStyle(0);
+  hYieldsRatioSyst->Draw("same e2");
 
   padYieldUp->cd();
   legendTitle->Draw();
@@ -238,6 +236,49 @@ void compPublXiMB(const Int_t nParticle = 2, // 0-2 : xi, 3-5 : omega
 
   outputfile->cd();
   canvasComparison->Write();
+
+  // Compare Systematics //
+  TLegend *legendTitleSystComp = new TLegend(0.589, 0.625, 0.888, 0.824);
+  StyleLegend(legendTitleSystComp, 0.0, 0.0);
+  legendTitleSystComp->SetTextAlign(33);
+  legendTitleSystComp->SetTextSize(0.05);
+  legendTitleSystComp->SetTextFont(42);
+  legendTitleSystComp->SetLineColorAlpha(0.,0.);
+  legendTitleSystComp->SetFillColorAlpha(0.,0.);
+  legendTitleSystComp->AddEntry("", "#bf{ALICE Work In Progress}", "");
+  legendTitleSystComp->AddEntry("", particleSymnbols[2] + ", |y| < 0.5", "");
+
+  TLegend *legendsystComp = new TLegend(0.182, 0.180, 0.383, 0.358);
+  legendsystComp->SetFillStyle(0);
+  legendsystComp->SetTextSize(0.03);
+
+  TCanvas *canvasSystComp = new TCanvas("canvasSystComp","canvasSystComp", 0,66,857,708);
+  canvasSystComp->cd();
+  canvasSystComp->Draw();
+  StyleCanvas(canvasSystComp, 0.14, 0.05, 0.11, 0.15);
+  TH1F* hRun3Syst = (TH1F* )hYield[0]->Clone("hRun3Syst");
+  TH1F* hRun2Syst = (TH1F* )hHEPYieldSyst->Clone("hRun2Syst");
+  for(Int_t bin = 1; bin <= hYield[0]->GetNbinsX(); bin++) {
+    hRun3Syst->SetBinContent(bin, hYieldSyst[0]->GetBinError(bin) / hYield[0]->GetBinContent(bin) * 100);
+    hRun2Syst->SetBinContent(bin, hHEPYieldSyst->GetBinError(bin) / hHEPYield->GetBinContent(bin) * 100);
+    hRun3Syst->SetBinError(bin, 0.);
+    hRun2Syst->SetBinError(bin, 0.);
+  }
+  legendsystComp->AddEntry(hRun3Syst, "pp, #sqrt{#it{s}} = 13.6 TeV", "l");
+  legendsystComp->AddEntry(hRun2Syst, "Eur.Phys.J.C.80 (2020) 167, pp, #sqrt{#it{s}} = 13 TeV", "l");
+  StyleHisto(hRun3Syst, 0., 9, color[0], MarkerMult[0], sPt, "Systematic uncertainty (%)", "", 0, 0, 0, 1.0, 1.25, SizeMult[0], 0.04, 0.04, 0.04, 0.04, 0.01);
+  StyleHisto(hRun2Syst, 0., 9, color[compStyle], MarkerMult[compStyle], sPt, "Systematic uncertainty (%)", "", 0, 0, 0, 1.0, 1.25, SizeMult[compStyle], 0.04, 0.04, 0.04, 0.04, 0.01);
+  hRun3Syst->GetYaxis()->SetMaxDigits(1);
+  //hRun3Syst->GetYaxis()->SetDecimals(kTRUE);
+  //gPad->SetLogy();
+  hRun3Syst->Draw("same");
+  hRun3Syst->SetLineWidth(3);
+  hRun2Syst->Draw("same");
+  hRun2Syst->SetLineWidth(3);
+  legendTitleSystComp->Draw("same");
+  legendsystComp->Draw("same");
+  outputfile->cd();
+  canvasSystComp->Write();
 
   // End of Code
   std::cout << "\x1B[1;32m"; // Set text color to green

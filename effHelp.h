@@ -50,6 +50,25 @@ void StyleHisto(THisto *histo, Double_t Low, Double_t Up, Int_t color, Int_t sty
   histo->SetTitle(title);
 }
 
+template <typename TMG>
+void StyleMultGraph(TMG *mg, Double_t Low, Double_t Up, TString titleX, TString titleY, TString title, 
+                Bool_t XRange, Double_t XLow, Double_t XUp, Double_t xOffset, Double_t yOffset, 
+                Double_t xTitleSize, Double_t yTitleSize)
+{
+  mg->GetYaxis()->SetRangeUser(Low, Up);
+  if (XRange)
+    mg->GetXaxis()->SetRangeUser(XLow, XUp);
+  mg->GetXaxis()->SetTitle(titleX);
+  //histo->GetXaxis()->SetLabelSize(0.05);
+  mg->GetXaxis()->SetTitleSize(xTitleSize);
+  mg->GetXaxis()->SetTitleOffset(xOffset);
+  mg->GetYaxis()->SetTitle(titleY);
+  mg->GetYaxis()->SetTitleSize(yTitleSize);
+  //histo->GetYaxis()->SetLabelSize(0.05);
+  mg->GetYaxis()->SetTitleOffset(yOffset);
+  mg->SetTitle(title);
+}
+
 template <typename THisto>
 void StyleHistoMultiPlot(THisto *histo, Double_t Low, Double_t Up, Int_t color, Int_t style, TString titleX, TString titleY, TString title, 
                 Bool_t XRange, Double_t XLow, Double_t XUp, Double_t xOffset, Double_t yOffset, Double_t mSize, 
